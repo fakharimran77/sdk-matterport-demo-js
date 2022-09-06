@@ -4,7 +4,7 @@ const showcaseWindow = showcase.contentWindow;
 export let matterportSdk;
 
 showcase.addEventListener("load", async () => {
-    matterportSdk = await showcaseWindow.MP_SDK.connect(showcaseWindow);
+    matterportSdk = await showcaseWindow.MP_SDK.connect(showcaseWindow, MATTERPORT_KEY);
 })
 
 export const changeContent = (content) => {
