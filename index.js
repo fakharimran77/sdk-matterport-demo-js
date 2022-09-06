@@ -18,7 +18,7 @@ supervizSdk.subscribe(CONTENT_SYNC_PROPERTY, function (newModelSid) {
 });
 
 const sendSyncCommand = function (index) {
-    supervizSdk.setSyncProperty({ [CONTENT_SYNC_PROPERTY]: MATTERPORT_MODELS[index] });
+    supervizSdk.setSyncProperty(CONTENT_SYNC_PROPERTY, MATTERPORT_MODELS[index]);
 }
 
 document.getElementById('previousButton').onclick = function () {
