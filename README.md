@@ -17,4 +17,4 @@ Fill the constant ```<SUPERVIZ_DEVELOPER_TOKEN>``` in ```modules/superviz/superv
 Fill the constant ```<MATTERPORT_DEVELOPER_KEY>``` in ```modules/matterport/matterportSdk.js``` with your matterport developer credentials.
 
 
-### From the project root, run a local web server and access using localhost.
+#### From the project root, run a local web server and access it using localhost.
