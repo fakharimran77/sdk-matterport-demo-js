@@ -1,5 +1,4 @@
 const DEVELOPER_KEY = "<SUPERVIZ_DEVELOPER_TOKEN>";
-
 export const supervizSdk = await SuperVizSdk.init(DEVELOPER_KEY, {
     userGroup: {
         id: "<GROUP-ID>",
@@ -8,8 +7,10 @@ export const supervizSdk = await SuperVizSdk.init(DEVELOPER_KEY, {
     user: {
         id: "<MY-USER-ID>",
         name: "<MY-USER-NAME>",
-        isHostCandidate: true
+        isHostCandidate: true,
     },
     roomId: "<ROOM-ID>",
+    defaultAvatars: true,
+    enableFollow: true,
     debug: true
 });
