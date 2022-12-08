@@ -179,7 +179,6 @@ export interface IDisposable {
 export declare type ConnectOptions = {
 	/** A token to provide access to a model */
 	auth: string;
-	applicationKey: string;
 };
 declare function disconnect(): void;
 export declare namespace App {
@@ -215,7 +214,10 @@ export declare namespace App {
 	 * Application
 	 */
 	enum Application {
-		SHOWCASE = "application.showcase"
+		UNKNOWN = "application.unknown",
+		WEBVR = "application.webvr",
+		SHOWCASE = "application.showcase",
+		WORKSHOP = "application.workshop"
 	}
 	/**
 	 * @deprecated This type is used by deprecated functionality. Use [[state]] observable.
@@ -2515,7 +2517,7 @@ export interface OAuth {
 	createTokenRefresher(token: OAuth.TokenInfo, tokenFetcher: OAuth.ITokenFetcher): OAuth.ITokenRefresher;
 }
 export declare namespace Pointer {
-	type Intersection = {
+	export type Intersection = {
 		position: Vector3;
 		normal: Vector3;
 		/** @deprecated Use [[floorIndex]] instead */
@@ -2526,34 +2528,37 @@ export declare namespace Pointer {
 		floorIndex: number | undefined;
 		object: Colliders;
 	};
-	enum Colliders {
+	export enum Colliders {
 		NONE = "intersectedobject.none",
 		MODEL = "intersectedobject.model",
 		TAG = "intersectedobject.tag",
 		SWEEP = "intersectedobject.sweep",
 		UNKNOWN = "intersectedobject.unknown"
 	}
+	type FadeOutProps = {
+		/**
+		 * Duration in milliseconds. Default is 700.
+		 */
+		duration?: number;
+		/**
+		 * Delay in milliseconds. Default is 700.
+		 */
+		delay?: number;
+	};
+	type FadeInProps = {
+		/**
+		 * Duration in milliseconds. Default is 300.
+		 */
+		duration?: number;
+	};
 	/**
 	 * Pointer reticle fade properties.
 	 */
-	type FadeProps = {
-		fadeOut?: {
-			/**
-			 * Duration in milliseconds. Default is 700.
-			 */
-			duration?: number;
-			/**
-			 * Delay in milliseconds. Default is 700.
-			 */
-			delay?: number;
-		};
-		fadeIn?: {
-			/**
-			 * Duration in milliseconds. Default is 300.
-			 */
-			duration?: number;
-		};
+	export type FadeProps = {
+		fadeOut?: FadeOutProps;
+		fadeIn?: FadeInProps;
 	};
+	export {};
 }
 export interface Pointer {
 	Colliders: typeof Pointer.Colliders;
@@ -3274,7 +3279,7 @@ export declare namespace Scene {
 		 * const node2 = sceneObject.createNode();
 		 *
 		 * // mp.objLoader has an outputs.visible property
-		 * const comp1 = node1.addComponent(`mp.objLoader');
+		 * const comp1 = node1.addComponent('mp.objLoader');
 		 *
 		 * // myComponent has an inputs.toggleState property
 		 * const comp2 = node2.addComponent('myComponent');
@@ -3428,28 +3433,66 @@ export declare namespace Scene {
 		 */
 		property: string;
 	};
+	export interface PathBase {
+		/**
+		 * The object this path is associated with
+		 */
+		readonly object: Scene.IObject;
+		/**
+		 * The id of this path. Set to a random string, or the id provided when creating the path
+		 */
+		readonly id: string;
+	}
 	/**
 	 * A path to a component's input property
 	 */
-	export interface InputPath<T = unknown> {
+	export interface InputPath<T = unknown> extends PathBase {
+		/**
+		 * Get the value of the property associated with this path
+		 */
 		get(): T;
+		/**
+		 * Set the value of the property associated with this path
+		 * @param newVal
+		 */
 		set(newVal: T): void;
+		/**
+		 * Bind this path to an [[OutputPath]]. As the value of the bound output path changes, the value returned by [[get]] will also change
+		 * @param outputPath
+		 */
+		bind(outputPath: OutputPath): void;
 	}
 	/**
 	 * A path to a component's output property
 	 */
-	export interface OutputPath<T = unknown> {
+	export interface OutputPath<T = unknown> extends PathBase {
+		/**
+		 * Get the value of the property associated with this path
+		 */
 		get(): T;
+		/**
+		 * Bind this path to an [[InputPath]]. As the value of this output changes, the value returned by the bound [[InputPath.get]] will also change
+		 * @param outputPath
+		 */
+		bind(inputPath: InputPath): void;
 	}
 	/**
 	 * A path to a component's event property
 	 */
-	export interface EventPath {
+	export interface EventPath extends PathBase {
+		/**
+		 * Bind this path to an [[EmitPath]].
+		 */
+		bind(emitPath: EmitPath): void;
 	}
 	/**
 	 * A path to a component's emit property
 	 */
-	export interface EmitPath {
+	export interface EmitPath extends PathBase {
+		/**
+		 * Bind this path to an [[EventPath]].
+		 */
+		bind(eventPath: EventPath): void;
 	}
 	/**
 	 * A spy allows for spying on events triggered on a component from outside of the component system
@@ -3458,7 +3501,7 @@ export declare namespace Scene {
 		/**
 		 * The path to spy on
 		 */
-		readonly path: InputPath | EmitPath | OutputPath;
+		readonly path: InputPath | OutputPath | EventPath | EmitPath;
 		/**
 		 * Triggered when the data at `path` changes or when its event is triggered
 		 * @param eventData The data sent with event from a [[IComponent.notify]] call or the new value of the input or output referenced by the path.
@@ -3537,12 +3580,12 @@ export declare namespace Scene {
 		 *  object.spyOnEvent({
 		 *    path: inputPath,
 		 *    onEvent(newValue) {
-		 *      console.log(`input.count's new value is ${newValue}`);
+		 *      console.log(`component.input.count's new value is ${newValue}`);
 		 *    },
 		 *  });
 		 *  // read and change the value of the input in the component
 		 *  const countValue = inputPath.get();
-		 *  inputPath.set(count+ + 1);
+		 *  inputPath.set(count + 1);
 		 *
 		 * // bind the path to the value from another (output) path
 		 *  object.bindPath(inputPath, outputPath);
@@ -3570,13 +3613,13 @@ export declare namespace Scene {
 		 *  const [object, node, component];
 		 *
 		 *  // create the path
-		 *  const outputPath = object.addOutput(component, 'current');
+		 *  const outputPath = object.addOutputPath(component, 'current');
 		 *
 		 *  // observe changes to the value of `outputs.current` in component
 		 *  object.spyOnEvent({
 		 *    path: outputPath,
 		 *    onEvent(newValue) {
-		 *      console.log(`input.current's new value is ${newValue}`);
+		 *      console.log(`component.output.current's new value is ${newValue}`);
 		 *    },
 		 *  });
 		 *  // read and bind the value of the output to another component's input value
@@ -3604,7 +3647,7 @@ export declare namespace Scene {
 		 *  const [object, node, component];
 		 *
 		 *  // create the path
-		 *  const eventPath = object.addOutput(component, 'rerender');
+		 *  const eventPath = object.addEventPath(component, 'rerender');
 		 *
 		 *  // bind the event path so that it triggers the component's onEvent when `emitPath` emits an event
 		 *  object.bindPath(eventPath, emitPath);
@@ -3631,7 +3674,7 @@ export declare namespace Scene {
 		 *  const [object, node, component];
 		 *
 		 *  // create the path
-		 *  const emitPath = object.addOutput(component, 'clicked');
+		 *  const emitPath = object.addEmitPath(component, 'clicked');
 		 *
 		 *  // bind the emit path so that it triggers the `emitPath`'s associated component's onEvent when an event is emitted
 		 *  object.bindPath(eventPath, emitPath);
@@ -3660,24 +3703,12 @@ export declare namespace Scene {
 		 * const node = sceneObject.addNode();
 		 *
 		 * // mp.objLoader has an outputs.visible property
-		 * const comp1 = node.addComponent(`mp.objLoader');
-		 * const outputPath = sceneObj.addPath({
-		 *   id: 'objLoader-visible',
-		 *   type: sdk.Scene.PathType.OUTPUT,
-		 *   node: node,
-		 *   component: comp1,
-		 *   property: 'visible',
-		 * });
+		 * const comp1 = node.addComponent('mp.objLoader');
+		 * const outputPath = sceneObject.addOutputPath(comp1, 'visible', 'objLoader-visible');
 		 *
 		 * // myComponent has an inputs.toggleState property
 		 * const comp2 = node.addComponent('myComponent');
-		 * const inputPath = sceneObj.addPath({
-		 *   id: 'myComponent-toggle',
-		 *   type: sdk.Scene.PathType.INPUT,
-		 *   node: node,
-		 *   component: comp2,
-		 *   property: 'toggleState',
-		 * });
+		 * const inputPath = sceneObject.addInputPath(comp2, 'toggleState', 'myComponent-toggle');
 		 * sceneObject.bindPath(inputPath, outputPath);
 		 *
 		 * node.start();
@@ -3696,23 +3727,11 @@ export declare namespace Scene {
 		 *
 		 * // myReceiver has an `onEvent` lifecycle function and an `events['do.update']` property
 		 * const receiver = node.addComponent(`myReceiver');
-		 * const eventPath = sceneObj.addPath({
-		 *   id: 'objLoader-visible',
-		 *   type: sdk.Scene.PathType.EVENT,
-		 *   node: node,
-		 *   component: receiver,
-		 *   property: 'do.update',
-		 * });
+		 * const eventPath = sceneObject.addEventPath(receiver, 'do.update', 'my-reciever-update');
 		 *
 		 * // myEmitter calls notify with an 'updated' event and has an `emits['updated']` property
 		 * const emitter = node.addComponent('myEmitter');
-		 * const emitPath = sceneObj.addPath({
-		 *   id: 'myComponent-toggle',
-		 *   type: sdk.Scene.PathType.EMIT,
-		 *   node: node,
-		 *   component: emitter,
-		 *   property: 'updated',
-		 * });
+		 * const emitPath = sceneObject.addEmitPath(emitter, 'updated', 'my-component-updated');
 		 * sceneObject.bindPath(eventPath, emitPath);
 		 *
 		 * node.start();
@@ -3730,14 +3749,8 @@ export declare namespace Scene {
 		 * const node = sceneObject.createNode();
 		 *
 		 * // mp.objLoader has an outputs.visible property
-		 * const comp1 = node.addComponent(`mp.objLoader');
-		 * const outputPath = sceneObj.addPath({
-		 *   id: 'objLoader-visible',
-		 *   type: sdk.Scene.PathType.OUTPUT,
-		 *   node: node,
-		 *   component: comp1,
-		 *   property: 'visible',
-		 * });
+		 * const comp1 = node.addComponent('mp.objLoader');
+		 * const outputPath = sceneObject.addOutputPath(comp1, 'visible', 'objLoader-visible');
 		 *
 		 * const outputSpy = {
 		 *   path: outputPath,
@@ -3823,7 +3836,7 @@ export interface Scene {
 	 *   renderer.shadowMap.bias = 0.0001;
 	 *   renderer.shadowMap.type = three.PCFSoftShadowMap;
 	 *
-	 *   if (effectsComposer) {
+	 *   if (effectComposer) {
 	 *     // add a custom pass here
 	 *   }
 	 * });
@@ -3869,22 +3882,33 @@ export interface Scene {
 	 */
 	createObjects(count: number): Promise<Scene.IObject[]>;
 	/**
-	 * This function returns an array of scene nodes from serialized scene.
-	 * The returned scene nodes have not been started yet.
+	 * This function returns a scene object with all of its scene nodes from a serialized scene.
+	 * The returned scene object has not been started yet.
 	 * @param text The serialized scene.
-	 * @return A promise that resolves with an array of scene nodes.
+	 * @return A promise that resolves with a scene object.
 	 *
 	 * @bundle
 	 */
-	deserialize(text: string): Promise<Scene.INode[] | Scene.IObject>;
+	deserialize(text: string): Promise<Scene.IObject>;
 	/**
-	 * This function serializes an array of scene nodes and their components to a string.
-	 * @param sceneNodes An array of scene nodes.
+	 * Serialize a scene object, its nodes, and their components to a string.
+	 * @param sceneObject
 	 * @return A promise that resolves with the serialized string.
 	 *
 	 * @bundle
 	 */
-	serialize(sceneNodes: Scene.INode[] | Scene.IObject): Promise<string>;
+	serialize(sceneObject: Scene.IObject): Promise<string>;
+	/**
+	 * This function serializes an array of scene nodes and their components to a string.
+	 * This function is only provided to provide an upgrade path from nodes that were created before the introduction of `IObject`s.
+	 *
+	 * @param sceneNodes An array of scene nodes.
+	 * @return A promise that resolves with the serialized string.
+	 *
+	 * @bundle
+	 * @deprecated Prefer to serialize an array of `Scene.INode` through their containing `Scene.IObject` instead.
+	 */
+	serialize(sceneNodes: Scene.INode[]): Promise<string>;
 	/**
 	 * Register a component factory.
 	 * @param name A unique component name.
@@ -4071,14 +4095,14 @@ export interface Sensor {
 	/**
 	 * Create an [[`ISensor`]] which can sense and provide information about [[`ISource`]].
 	 *
-	 * ```
+	 * ```typescript
 	 * const sensor = await mpSdk.Sensor.createSensor(mpSdk.Sensor.SensorType.CAMERA);
 	 * // add sources from calls to `Sensor.createSource()`
 	 * sensor.addSource(...sources);
 	 * // start listening for changes to the sensor's readings
 	 * sensor.readings.subscribe({
 	 *   onAdded(source, reading) {
-	 *     console.log(source.userData.id, 'has a reading of', );
+	 *     console.log(source.userData.id, 'has a reading of', reading);
 	 *   },
 	 *   onUpdated(source, reading) {
 	 *     console.log(source.userData.id, 'has an updated reading');
@@ -4112,7 +4136,7 @@ export interface Sensor {
 	 *   mpSdk.Sensor.createSource(mpSdk.Sensor.SourceType.SPHERE, {
 	 *     radius: 4,
 	 *     userData: {
-	 *       id: 'sphere-source-2,
+	 *       id: 'sphere-source-2',
 	 *     },
 	 *   }),
 	 * ]);
@@ -4143,7 +4167,7 @@ export interface Sensor {
 	 *     size: { x: 2: y: 2, z: 2 },
 	 *     orientation: { yaw: 45, pitch: 45, roll: 45 },
 	 *     userData: {
-	 *       id: 'box-source-2,
+	 *       id: 'box-source-2',
 	 *     },
 	 *   }),
 	 * ]);
@@ -4174,7 +4198,7 @@ export interface Sensor {
 		   basePoint: { x: 1, y: 2, z: 3 },
 		   radius: 3,
 	 *     userData: {
-	 *       id: 'cylinder-source-2,
+	 *       id: 'cylinder-source-2',
 	 *     },
 	 *   }),
 	 * ]);
@@ -4233,7 +4257,7 @@ export declare namespace Tag {
 		/** The attachment contains a video */
 		VIDEO = "tag.attachment.video",
 		ZIP = "tag.attachment.zip",
-		/** The attachment is a sandbox created by a call to [[Tag.addSandbox]] */
+		/** The attachment is a sandbox created by a call to [[Tag.registerSandbox]] */
 		SANDBOX = "tag.attachment.sandbox"
 	}
 	type TagData = {
@@ -4334,7 +4358,7 @@ export interface Tag {
 	/**
 	 * An observable collection of the [[Attachment]].
 	 *
-	 * ```
+	 * ```typescript
 	 * mpSdk.Tag.attachments.subscribe({
 	 *   onAdded: function (index, item, collection) {
 	 *     console.log('An attachemnt was added to the collection', index, item, collection);
@@ -4345,14 +4369,15 @@ export interface Tag {
 	 * });
 	 * ```
 	 *
-	 * @earlyaccess
+	 * @embed
+	 * @bundle
 	 * @introduced 3.1.68.12-7-g858688944a
 	 */
 	attachments: IObservableMap<Tag.Attachment>;
 	/**
 	 * Attach [[Attachment]] to a Tag.
 	 *
-	 * ```
+	 * ```typescript
 	 * const tagId: string; // ... acquired through a previous call to `mpSdk.Tag.add` or through `mpSdk.Tag.data`
 	 * const attachmentIds: string[]; // ... acquired through a previous call to `mpSdk.Tag.registerAttachment` or through `mpSdk.Tag.attachments`
 	 *
@@ -4365,14 +4390,15 @@ export interface Tag {
 	 * @param attachmentId
 	 * @return A promise that resolves when the Attachment is added to the Tag
 	 *
-	 * @earlyaccess
+	 * @embed
+	 * @bundle
 	 * @introduced 3.1.68.12-7-g858688944a
 	 */
 	attach(tagId: string, ...attachmentIds: string[]): Promise<void>;
 	/**
 	 * Detach [[Attachment]] from a Tag.
 	 *
-	 * ```
+	 * ```typescript
 	 * const tagId: string; // ... acquired through a previous call to `mpSdk.Tag.add` or through `mpSdk.Tag.data`
 	 * const attachmentIds: string[]; // ... acquired through a previous call to `mpSdk.Tag.registerAttachment` or through `mpSdk.Tag.attachments`
 	 *
@@ -4389,8 +4415,9 @@ export interface Tag {
 	/**
 	 * Register a new [[Attachment]] that can later be attached as media to a Tag.
 	 *
-	 * Custom HTML can be added as an attachment through the use of [[addSandbox]] instead.
-	 * ```
+	 * Custom HTML can be added as an attachment through the use of [[registerSandbox]] instead.
+	 *
+	 * ```typescript
 	 * // register a couple of attachments to use later
 	 * const [attachmentId1, attachmentId2] = mpSdk.Tag.registerAttachment(
 	 *   'https://[link.to/media]',
@@ -4400,7 +4427,8 @@ export interface Tag {
 	 * @param srcs The src URLs of the media
 	 * @return A promise that resolves to an array of ids associated with the newly added Attachments
 	 *
-	 * @earlyaccess
+	 * @embed
+	 * @bundle
 	 * @introduced 3.1.68.12-7-g858688944a
 	 */
 	registerAttachment(...srcs: string[]): Promise<string[]>;
@@ -4408,7 +4436,7 @@ export interface Tag {
 	 * Register an HTML sandbox that diplays custom HTML and runs custom scripts as an attachment.
 	 * Data can be sent and received from the sandbox by using the returned [[IMessenger]].
 	 *
-	 * ```
+	 * ```typescript
 	 * const htmlToInject = `
 	 *   <style>
 	 *     button {
@@ -4447,7 +4475,8 @@ export interface Tag {
 	 * @param options
 	 * @returns An [[IMessenger]] that can be used to communicate with the sandbox by sending and receiving data
 	 *
-	 * @earlyaccess
+	 * @embed
+	 * @bundle
 	 * @introduced 3.1.70.10-0-ge9cb83b28c
 	 */
 	registerSandbox(html: string, options?: Tag.SandboxOptions): Promise<[
@@ -4459,7 +4488,7 @@ export interface Tag {
 	 *
 	 * When first subscribing, the current set of Tags will call the observer's `onAdded` for each Tag as the data becomes available.
 	 *
-	 * ```
+	 * ```typescript
 	 * mpSdk.Tag.data.subscribe({
 	 *   onAdded: function (index, item, collection) {
 	 *     console.log('Tag added to the collection', index, item, collection);
@@ -4473,7 +4502,8 @@ export interface Tag {
 	 * });
 	 * ```
 	 *
-	 * @earlyaccess
+	 * @embed
+	 * @bundle
 	 * @introduced 3.1.68.12-7-g858688944a
 	 */
 	data: IObservableMap<Tag.TagData>;
@@ -4489,7 +4519,7 @@ export interface Tag {
 	 *
 	 * **Note**: these changes are not persisted between refreshes of Showcase. They are only valid for the current browser session.
 	 *
-	 * ```
+	 * ```typescript
 	 * mpSdk.Tag.add({
 	 *  label: 'New tag',
 	 *  description: 'This tag was added through the Matterport SDK',
@@ -4526,39 +4556,34 @@ export interface Tag {
 	 * @param tags The descriptors for all Tags to be added.
 	 * @returns A promise that resolves with the arary of ids for the newly added Tags.
 	 *
-	 * @earlyaccess
+	 * @embed
+	 * @bundle
 	 * @introduced 3.1.68.12-7-g858688944a
 	 */
 	add(...tags: Tag.Descriptor[]): Promise<string[]>;
 	/**
-	 * @earlyaccess
-	 * @deprecated Use [[Tag.registerSandbox]] and [[Tag.attach]] to add custom HTML to a tag instead.
-	 * @introduced 3.1.68.12-7-g858688944a
-	 */
-	addSandbox(id: string, html: string, options?: Tag.SandboxOptions): Promise<Tag.IMessenger>;
-	/**
 	 * Sets the allowed "default" Showcase actions on a Tag from occurring: hover to open billboard, click to navigate to view.
 	 * If an action is ommited from the actions argument, it will be considered false by default.
 	 *
-	 * ```
+	 * ```typescript
 	 * const tagIds: string[]; // ... acquired through previous calls to `mpSdk.Tag.add` or through `mpSdk.Tag.data`
 	 *
 	 * // prevent navigating to the tag on click
-	 * var noNavigationTag = tagIds[0];
-	 * mpSdk.Tag.allowAction(noNavigationTag.id, {
+	 * const noNavigationTag = tagIds[0];
+	 * mpSdk.Tag.allowAction(noNavigationTag, {
 	 *   opening: true,
 	 *   // implies navigating: false
 	 * });
 	 *
 	 * // prevent the billboard from showing
-	 * var noBillboardTag = tagIds[1];
-	 * mpSdk.Tag.allowAction(noBillboardTag.id, {
+	 * const noBillboardTag = tagIds[1];
+	 * mpSdk.Tag.allowAction(noBillboardTag, {
 	 *   navigating: true,
 	 *   // implies opening: false
 	 * });
 	 *
-	 * var noActionsTag = tagIds[2];
-	 * mpSdk.Tag.preventAction(allowAction.id, {
+	 * const noActionsTag = tagIds[2];
+	 * mpSdk.Tag.allowAction(noActionsTag, {
 	 *   // implies opeing: false and navigating: false
 	 * });
 	 * ```
@@ -4566,7 +4591,8 @@ export interface Tag {
 	 * @param id The id of the Tag to change the allowed actions
 	 * @param actions The set of actions allowed on the Tag
 	 *
-	 * @earlyaccess
+	 * @embed
+	 * @bundle
 	 * @introduced 3.1.68.12-7-g858688944a
 	 */
 	allowAction(id: string, actions: Partial<Tag.AllowableActions>): Promise<void>;
@@ -4575,7 +4601,7 @@ export interface Tag {
 	 *
 	 * **Note**: these changes are not persisted between refreshes of Showcase. They are only valid for the current browser session.
 	 *
-	 * ```
+	 * ```typescript
 	 * mpSdk.Tag.editBillboard(id, {
 	 *   label: 'This is a new title',
 	 *   description: 'This image was set dynamically by the Showcase sdk',
@@ -4584,14 +4610,15 @@ export interface Tag {
 	 * @param id the id of the Tag to edit
 	 * @param properties A dictionary of properties to set
 	 *
-	 * @earlyaccess
+	 * @embed
+	 * @bundle
 	 * @introduced 3.1.68.12-7-g858688944a
 	 */
 	editBillboard(id: string, properties: Partial<Tag.EditableProperties>): Promise<void>;
 	/**
 	 * Edit the color of a Tag's disc.
 	 *
-	 * ```
+	 * ```typescript
 	 * const tagIds: string[]; // ... acquired through previous calls to `mpSdk.Tag.add` or through `mpSdk.Tag.data`
 	 *
 	 * // change the first Tag to yellow
@@ -4605,7 +4632,8 @@ export interface Tag {
 	 * @param id The id of the Tag to edit
 	 * @param color The new color to be applied to the Tag disc
 	 *
-	 * @earlyaccess
+	 * @embed
+	 * @bundle
 	 * @introduced 3.1.68.12-7-g858688944a
 	 */
 	editColor(id: string, color: Color): Promise<void>;
@@ -4614,7 +4642,7 @@ export interface Tag {
 	 *
 	 * **Note**: these changes are not persisted between refreshes of Showcase. They are only valid for the current browser session.
 	 *
-	 * ```
+	 * ```typescript
 	 * // change the icon of the Tag using the id used in a previous registeredIcon call
 	 * mpSdk.Tag.editIcon(id, 'customIconId');
 	 * ```
@@ -4622,7 +4650,8 @@ export interface Tag {
 	 * @param tagId The id of the Tag to edit
 	 * @param iconId The id of the icon to apply
 	 *
-	 * @earlyaccess
+	 * @embed
+	 * @bundle
 	 * @introduced 3.1.68.12-7-g858688944a
 	 */
 	editIcon(tagId: string, iconId: string): Promise<void>;
@@ -4631,7 +4660,7 @@ export interface Tag {
 	 *
 	 * A completely transparent/invisible Tag is still interactable and will respond to mouse hovers and clicks.
 	 *
-	 * ```
+	 * ```typescript
 	 * const tagIds: string[]; // ... acquired through previous calls to `mpSdk.Tag.add` or through `mpSdk.Tag.data`
 	 * // make the first Tag invisible
 	 * mpSdk.Tag.editOpacity(tagIds[0], 0);
@@ -4646,14 +4675,15 @@ export interface Tag {
 	 * @param id The id of the Tag to edit
 	 * @param opacity The target opacity for the Tag in the range of [0, 1]
 	 *
-	 * @earlyaccess
+	 * @embed
+	 * @bundle
 	 * @introduced 3.1.68.12-7-g858688944a
 	 */
 	editOpacity(id: string, opacity: number): Promise<void>;
 	/**
 	 * Edit the stem of a Tag
 	 *
-	 * ```
+	 * ```typescript
 	 * const tagId: string = tagData[0].id; // ... acquired through a previous call to `mpSdk.Tag.add` or through `mpSdk.Tag.data`
 	 *
 	 * // make the first Tag have an invsible stem
@@ -4675,7 +4705,7 @@ export interface Tag {
 	 *
 	 * **Note**: these changes are not persisted between refreshes of Showcase. They are only valid for the current browser session.
 	 *
-	 * ```
+	 * ```typescript
 	 * const tagId: string; // ... acquired through a previous call to `mpSdk.Tag.add` or through `mpSdk.Tag.data`
 	 *
 	 * mpSdk.Tag.editPosition(tagId, {
@@ -4694,7 +4724,8 @@ export interface Tag {
 	 * @param id The id of the Tag to reposition
 	 * @param options The new anchorPosition, stemVector and/or roomId to associate the tag with.
 	 *
-	 * @earlyaccess
+	 * @embed
+	 * @bundle
 	 * @introduced 3.1.68.12-7-g858688944a
 	 */
 	editPosition(id: string, options: Partial<Tag.PositionOptions>): Promise<void>;
@@ -4703,7 +4734,7 @@ export interface Tag {
 	 *
 	 * **Note**: these changes are not persisted between refreshes of Showcase. They are only valid for the current browser session.
 	 *
-	 * ```
+	 * ```typescript
 	 * const tagIds: string[]; // ... acquired through a previous call to `mpSdk.Tag.add` or through `mpSdk.Tag.data`
 	 * // remove one tag
 	 * mpSdk.Tag.remove(tagIds[0]);
@@ -4714,14 +4745,15 @@ export interface Tag {
 	 * @param ids The Tags' ids to be removed.
 	 * @returns A promise with an array of Tag ids that were actually removed.
 	 *
-	 * @earlyaccess
+	 * @embed
+	 * @bundle
 	 * @introduced 3.1.68.12-7-g858688944a
 	 */
 	remove(...ids: string[]): Promise<string[]>;
 	/**
 	 * Resets the icon of the Tag disc back to its original icon.
 	 *
-	 * ```
+	 * ```typescript
 	 * const tagIds: string[]; // ... acquired through a previous call to `mpSdk.Tag.add` or through `mpSdk.Tag.data`
 	 *
 	 * // reset the icon of the first Tag to its original
@@ -4730,7 +4762,8 @@ export interface Tag {
 	 *
 	 * @param id The id of the Tag to reset
 	 *
-	 * @earlyaccess
+	 * @embed
+	 * @bundle
 	 * @introduced 3.1.68.12-7-g858688944a
 	 */
 	resetIcon(id: string): Promise<void>;

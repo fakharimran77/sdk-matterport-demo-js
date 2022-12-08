@@ -290,6 +290,7 @@
       "NOTES": "%{smart_count} 個備註",
       "REPLIES": "%{smart_count} 個回覆",
       "CONTENT_DELETED": "原內容已被刪除",
+      "ADD_NOTE_MESSAGE": "Add your message",
       "MARK_AS_RESOLVED": "標記為「已解決」",
       "UNRESOLVE": "未解決",
       "EDIT": "編輯",
@@ -305,9 +306,6 @@
       "EDIT_LIST_ITEM_OPTION_CTA": "編輯",
       "DELETE_LIST_ITEM_OPTION_CTA": "刪除",
       "MISSING_MESSAGE": "備註不存在或可能已刪除",
-      "MODAL_TITLE": "新功能",
-      "MODAL_COPY": "您現可在空間中新增備註。每個備註都以對話形式顯示，擁有編輯權限的協作者可在其中評論及上傳附件。只有您邀請的協作者方可看到備註。新增備註並使用 @name 提及某人即可開始對話。",
-      "MODAL_CTA": "試一試吧",
       "ADD_CTA_TOOLTIP": "點擊即可為空間新增備註。",
       "ADD_TOOLTIP": "新增備註",
       "CANCEL_TOOLTIP": "取消備註",
@@ -317,7 +315,8 @@
       "OVERLAY_ADD_CLICK": "點擊空間以新增備註",
       "OVERLAY_PLACE_TOUCH": "無法在此處新增備註，長按空間以新增備註",
       "OVERLAY_PLACE_CLICK": "無法在此處新增備註，點擊空間以新增備註。",
-      "SEARCH_GROUP_HEADER": "備註及評論"
+      "SEARCH_GROUP_HEADER": "備註及評論",
+      "SEARCH_GROUP_HEADER_NOTES": "Notes"
     },
     "TAGS": {
       "CLOSE_TAG_LABEL": "關閉",
@@ -377,8 +376,8 @@
     "HLR_HELP_MESSAGE": "使用 Highlight Reel 將訪客引導至空間中最重要的位置。",
     "LABELS": "標籤",
     "LABELS_HELP_MESSAGE": "標籤是您可為空間中的房間關聯的簡短說明。",
-    "LAYERS": "視圖",
-    "LAYERS_HELP_MESSAGE": "視圖是資料的組織層",
+    "LAYERS": "Layers",
+    "LAYERS_HELP_MESSAGE": "Layers are used to group data elements together.",
     "MATTERTAGS": "Mattertags",
     "MATTERTAGS_HELP_MESSAGE": "Mattertag 是指出空間特色、提供更多詳情及新增背景資訊的極好方式。",
     "MEASUREMENTS": "測量值",
@@ -386,6 +385,7 @@
     "MESH_TRIM": "裁剪",
     "MESH_TRIM_HELP_MESSAGE": "使用「裁剪」功能隱藏模型的某些部分。",
     "NOTES": "備註",
+    "NOTES_HELP_MESSAGE": "Use Notes to collaborate efficiently with your team inside a Matterport space.",
     "PHOTOS": "相片",
     "PHOTOS_HELP_MESSAGE": "為空間拍攝高解像度相片，並下載相片以在網站上使用或列印。",
     "SCANS_3D": "3D 掃描",
@@ -406,7 +406,9 @@
     "UNSAVED_CHANGES_TITLE": "未儲存的變更",
     "UNSAVED_CHANGES_MESSAGE": "確定要繼續嗎？任何未儲存的變更都會丟失。",
     "UNSAVED_CHANGES_CONFIRM": "繼續編輯",
-    "UNSAVED_CHANGES_CANCEL": "放棄變更"
+    "UNSAVED_CHANGES_CANCEL": "放棄變更",
+    "PLUGIN_CONFIG": "Plugins",
+    "PLUGIN_CONFIG_HELP_MESSAGE": "Include plugins to add new functionality to the showcase experience."
   },
   "USERS": {
     "INVITE_USER": "%{email} 尚未受邀至此空間。",
@@ -424,14 +426,13 @@
   "VIEW_INSIDE": "探索 3D 空間",
   "VIEW_INSIDE_MESH": "查看網格",
   "VIEW_IN_VR": "以虛擬實境查看",
-  "VR_APP_INSTRUCT": "點擊下方按鈕切換至虛擬實境，然後將手機放入 Google Cardboard",
-  "VR_APP_RECCOMMENDED": "為了獲得更優質的虛擬實境體驗，我們強烈推薦 Oculus Quest 2。",
   "VR_ENTER": "進入虛擬實境",
   "VR_LEARN_MORE_CAPS": "了解更多資訊",
-  "VR_QUEST": "Oculus Quest 2",
+  "VR_QUEST": "Meta Quest 2",
+  "VR_META_LINK": "Open in Quest",
   "VR_RECOMMENDED": "推薦",
-  "VR_SUPPORTS": "在虛擬實境頭戴式裝置的瀏覽器中開啟此頁面，以全新方式體驗此空間。",
-  "VR_VIEW_SPACE": "查看虛擬實境空間",
+  "VR_SUPPORTS": "Experience this space in a whole new way by opening this page in your VR headset's browser",
+  "VR_VIEW_SPACE": "View space in virtual reality",
   "WORKSHOP": {
     "ACCORDION": {
       "DELETE_SELECTED_CTA": "清除",
@@ -495,9 +496,12 @@
       "APPLY_BLURS_CTA": "套用 %{smart_count} 個模糊",
       "APPLYING": "正在套用 %{smart_count} 個模糊……",
       "APPLY_MODAL_CONFIRM": "是，套用",
+      "APPLY_MODAL_NUDGE_CANCEL": "No, not yet",
       "APPLY_MODAL_MESSAGE": "這將套用<strong>%{blurs}至模型的%{scans}</strong>。需要幾分鐘方可完全套用模糊及安全地隱藏模糊物品。",
+      "APPLY_MODAL_NUDGE_MESSAGE": "Would you like to Apply blurs?",
       "APPLY_MODAL_RETRY": "任何失敗的模糊都會自動重試。",
       "APPLY_MODAL_TITLE": "套用模糊嗎？",
+      "APPLY_MODAL_NUDGE_TITLE": "You have unapplied blurs",
       "APPLY_MODAL_TRUNCATED": "僅可處理 <strong>%{blurs} 個模糊中的 %{maxBlurs} 個</strong>。請於套用完成後回來發佈更多內容。",
       "APPLY_MODAL_WARNING": "套用後，您建立的模糊將<strong>不再可編輯</strong>",
       "BATCH_SELECT": "選取",
@@ -625,6 +629,10 @@
       "HIGHLIGHT_SCENE_PLACEHOLDER": "新增場景",
       "HIGHLIGHT_TITLE_HINT": "標題",
       "HIGHLIGHT_TITLE_PLACEHOLDER": "新增標題",
+      "SEARCH_TOUR_HEADER": "Tour Highlights",
+      "SEARCH_HIGHLIGHT_DEFAULTNAME": "Tour Highlight",
+      "SEARCH_ITEM_DELETE": "Delete",
+      "SEARCH_ITEM_EDIT": "Edit",
       "TOUR_SETTINGS_LABEL": "導覽設定",
       "TOUR_EDITOR_BEHAVIORS_TAB": "行為",
       "TOUR_EDITOR_EMPTY_MESSAGE": "按一下「新增 Highlight」即可將當前視圖新增至您的導覽。",
@@ -695,6 +703,7 @@
       "UNFURNISHED": "不含傢俬"
     },
     "LAYERS": {
+      "LAYERS_NUM_TYPE": "%{smart_count} Layer |||| %{smart_count} Layers",
       "ADD_VIEW_MODAL_TITLE": "新增視圖",
       "EDIT_VIEW_MODAL_TITLE": "編輯視圖",
       "DUPLICATE_VIEW_MODAL_TITLE": "複製視圖",
@@ -716,6 +725,8 @@
       "VIEW_DUPLICATE": "複製",
       "VIEW_ENABLED_MESSAGE": "此視圖將<strong>顯示</strong>在查看者的下拉式選單中。",
       "VIEW_DISABLED_MESSAGE": "此視圖將<strong>隱藏</strong>在查看者的下拉式選單中。",
+      "VIEW_HIDE_MESSAGE": "Hide this view",
+      "VIEW_SHOW_MESSAGE": "Show this view",
       "VIEW_PREVIEW": "正在預覽%{viewName}",
       "VIEW_PREVIEW_NARROW": "正在預覽……",
       "DEFAULT_VIEW_NAME": "未命名的視圖",
@@ -1147,6 +1158,13 @@
     "VR": {
       "TOAST_MESSAGE": "一些掃描無法從開始位置到達。如欲解決此問題，請於該區域附近啟用更多掃描。",
       "TOAST_CTA": "關閉"
+    },
+    "PLUGINS": {
+      "PANEL_TITLE": "Plugins",
+      "DETAIL_TITLE": "All Plugins",
+      "SAVE_CONFIG": "Update Plugin",
+      "BACK_TO_ALL": "All Plugins",
+      "ENABLED": "Enabled"
     }
   },
   "ZOOM": "縮放",
