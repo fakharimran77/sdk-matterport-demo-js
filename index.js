@@ -7,7 +7,6 @@ const MATTERPORT_MODELS = [ // example models
     "NARFMvjQ3wq",
     "piqHj4JP6Fp"
 ];
-console.log('supervizSdk.MeetingEvent.content', SuperVizSdk.MeetingEvent.MY_USER_JOINED)
 let currentContentIndex = 0;
 
 changeContent(MATTERPORT_MODELS[0]);
