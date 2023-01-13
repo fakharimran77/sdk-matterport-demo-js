@@ -1,10 +1,12 @@
 const MATTERPORT_KEY = "<MATTERPORT_DEVELOPER_KEY>";
 const showcase = document.getElementById("showcase");
 const showcaseWindow = showcase.contentWindow;
-export let matterportSdk;
+import { onContentChanged } from './../../index.js'
 
+export let matterportSdk;
 showcase.addEventListener("load", async () => {
     matterportSdk = await showcaseWindow.MP_SDK.connect(showcaseWindow, MATTERPORT_KEY);
+    onContentChanged();
 })
 
 export const changeContent = (content) => {
