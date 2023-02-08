@@ -15,7 +15,8 @@ function loadPlugin() {
             scale: 1
         },
         isAvatarsEnabled: true,
-        isPointersEnabled: true
+        isLaserEnabled: true,
+        isNameEnabled: true
     });
 }
 
@@ -71,7 +72,7 @@ const sendSyncCommand = function (index) {
 
 // receive change content sync
 supervizSdk.subscribe(CONTENT_SYNC_PROPERTY, function (newModelSid) {
-    if (matterportPluginInstance) { // disconnect from plugin if there is one
+    if (matterportPluginInstance) { // unload plugin if there is one
         supervizSdk.unloadPlugin();
         matterportPluginInstance = null;
         changedContent = true;
@@ -82,6 +83,6 @@ supervizSdk.subscribe(CONTENT_SYNC_PROPERTY, function (newModelSid) {
 // received matterport loaded new content
 export const onContentChanged = () => {
     if (changedContent) {
-        loadPlugin(); // reconnect plugin
+        loadPlugin(); // reload plugin
     }
 }

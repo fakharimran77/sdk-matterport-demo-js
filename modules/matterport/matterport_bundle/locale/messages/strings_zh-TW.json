@@ -287,6 +287,7 @@
       "HAVE_NONE_RESOLVED": "您沒有任何已解決的備註。",
       "ATTACHMENTS": "%{smart_count} 個附件",
       "RESULTS": "%{smart_count} 個結果",
+      "COMMENTS": "%{smart_count} Comment |||| %{smart_count} Comments",
       "NOTES": "%{smart_count} 個備註",
       "REPLIES": "%{smart_count} 個回覆",
       "CONTENT_DELETED": "原內容已被刪除",
@@ -330,7 +331,15 @@
     },
     "SEARCH": {
       "QUERY_PLACEHOLDER": "搜尋空間",
+      "SEARCH_IN_TOOL_PLACEHOLDER": "Search",
       "CLEAR_SEARCH": "清除",
+      "FILTER_SEARCH": "Filter by",
+      "FILTER_SEARCH_ALL": "All",
+      "FILTER_SEARCH_REMOVE": "Remove Filter",
+      "GROUP_DATE": "Date",
+      "GROUP_DATE_SELECTED": "By Date",
+      "GROUP_LAYER": "Group",
+      "GROUP_LAYER_SELECTED": "By Group",
       "GROUP_FLOOR": "樓層",
       "GROUP_FLOOR_SELECTED": "按樓層",
       "GROUP_TYPE": "類型",
@@ -343,9 +352,9 @@
       "ADVANCED_SEARCH_TITLE": "進階搜尋模式"
     },
     "SUBSCRIBER_PROMPT": {
-      "BANNER_CTA_LINK_TEXT": "了解 Matterport",
-      "POPUP_CTA_HEADING": "掃描自己的空間",
-      "POPUP_CTA_LINK_TEXT": "下載 Matterport 應用程式"
+      "BANNER_CTA_LINK_TEXT": "掃描自己的空間",
+      "POPUP_CTA_LINK_TEXT": "下載 Matterport 應用程式",
+      "POPUP_CTA_HEADING": "Start sharing in 3D today"
     },
     "SUMMARY": {
       "HEADING": "空間資訊",
@@ -376,7 +385,7 @@
     "HLR_HELP_MESSAGE": "使用 Highlight Reel 將訪客引導至空間中最重要的位置。",
     "LABELS": "標籤",
     "LABELS_HELP_MESSAGE": "標籤是您可為空間中的房間關聯的簡短說明。",
-    "LAYERS": "Layers",
+    "LAYERS": "Search & Organize",
     "LAYERS_HELP_MESSAGE": "Layers are used to group data elements together.",
     "MATTERTAGS": "Mattertags",
     "MATTERTAGS_HELP_MESSAGE": "Mattertag 是指出空間特色、提供更多詳情及新增背景資訊的極好方式。",
@@ -710,6 +719,9 @@
       "NEW_VIEW_NAME_PLACEHOLDER": "新建視圖名稱",
       "VIEW_DUPLICATE_NAME_SUFFIX": "（副本）",
       "ADD_VIEW_ITEM": "新增視圖",
+      "DELETE_LAYER_ITEM": "Delete",
+      "DELETE_LAYER_MODAL_TITLE": "Delete Group",
+      "DELETE_LAYER_MODAL_MESSAGE": "Are you sure you want to delete this group?",
       "DELETE_VIEW_ITEM": "刪除",
       "DELETE_VIEW_MODAL_TITLE": "刪除視圖",
       "DELETE_VIEW_MODAL_MESSAGE": "確定要刪除此視圖嗎？",
@@ -1169,5 +1181,8 @@
   },
   "ZOOM": "縮放",
   "ZOOM_IN": "放大",
-  "ZOOM_OUT": "縮小"
+  "ZOOM_OUT": "縮小",
+  "SDK": {
+    "AWAITING": "Awaiting a valid SDK connection"
+  }
 }

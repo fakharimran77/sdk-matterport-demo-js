@@ -287,7 +287,8 @@
       "HAVE_NONE_RESOLVED": "Non hai nessuna nota risolta.",
       "ATTACHMENTS": "%{smart_count} allegato |||| %{smart_count} allegati",
       "RESULTS": "%{smart_count} risultato |||| %{smart_count} risultati",
-      "NOTES": "%{smart_count} nota |||| %{smart_count} note",
+      "COMMENTS": "%{smart_count} Comment |||| %{smart_count} Comments",
+      "NOTES": "%{smart_count} Nota |||| %{smart_count} Note",
       "REPLIES": "%{smart_count} risposta |||| %{smart_count} risposte",
       "CONTENT_DELETED": "Il contenuto originale è stato eliminato",
       "ADD_NOTE_MESSAGE": "Aggiungi il tuo messaggio",
@@ -330,7 +331,15 @@
     },
     "SEARCH": {
       "QUERY_PLACEHOLDER": "Cercare in uno Space",
+      "SEARCH_IN_TOOL_PLACEHOLDER": "Search",
       "CLEAR_SEARCH": "Cancella",
+      "FILTER_SEARCH": "Filter by",
+      "FILTER_SEARCH_ALL": "All",
+      "FILTER_SEARCH_REMOVE": "Remove Filter",
+      "GROUP_DATE": "Date",
+      "GROUP_DATE_SELECTED": "By Date",
+      "GROUP_LAYER": "Group",
+      "GROUP_LAYER_SELECTED": "By Group",
       "GROUP_FLOOR": "Piano",
       "GROUP_FLOOR_SELECTED": "Per piano",
       "GROUP_TYPE": "Tipo",
@@ -343,9 +352,9 @@
       "ADVANCED_SEARCH_TITLE": "Modalità di ricerca avanzata"
     },
     "SUBSCRIBER_PROMPT": {
-      "BANNER_CTA_LINK_TEXT": "Maggiori informazioni su Matterport",
-      "POPUP_CTA_HEADING": "Acquisite il vostro spazio",
-      "POPUP_CTA_LINK_TEXT": "Scaricare l'app Matterport"
+      "BANNER_CTA_LINK_TEXT": "Acquisite il vostro spazio",
+      "POPUP_CTA_LINK_TEXT": "Scaricare l'app Matterport",
+      "POPUP_CTA_HEADING": "Start sharing in 3D today"
     },
     "SUMMARY": {
       "HEADING": "Informazioni sullo Space",
@@ -376,7 +385,7 @@
     "HLR_HELP_MESSAGE": "Utilizza Highlight Reel per guidare i visitatori nelle posizioni più importanti del tuo Space.",
     "LABELS": "Etichette",
     "LABELS_HELP_MESSAGE": "Le etichette sono brevi descrizioni che puoi associare a una stanza all'interno di uno Space.",
-    "LAYERS": "Layers",
+    "LAYERS": "Search & Organize",
     "LAYERS_HELP_MESSAGE": "Layers are used to group data elements together.",
     "MATTERTAGS": "Mattertag",
     "MATTERTAGS_HELP_MESSAGE": "I Mattertag sono un ottimo strumento per evidenziare funzioni, fornire dettagli aggiuntivi e aggiungere contesto a uno Space.",
@@ -710,6 +719,9 @@
       "NEW_VIEW_NAME_PLACEHOLDER": "Nuovo nome visuale",
       "VIEW_DUPLICATE_NAME_SUFFIX": "(copia)",
       "ADD_VIEW_ITEM": "Aggiungi visuale",
+      "DELETE_LAYER_ITEM": "Delete",
+      "DELETE_LAYER_MODAL_TITLE": "Delete Group",
+      "DELETE_LAYER_MODAL_MESSAGE": "Are you sure you want to delete this group?",
       "DELETE_VIEW_ITEM": "Elimina",
       "DELETE_VIEW_MODAL_TITLE": "Elimina visuale",
       "DELETE_VIEW_MODAL_MESSAGE": "Vuoi davvero eliminare questa visuale?",
@@ -1169,5 +1181,8 @@
   },
   "ZOOM": "Zoom",
   "ZOOM_IN": "Ingrandisci",
-  "ZOOM_OUT": "Riduci"
+  "ZOOM_OUT": "Riduci",
+  "SDK": {
+    "AWAITING": "Awaiting a valid SDK connection"
+  }
 }
