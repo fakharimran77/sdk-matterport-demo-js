@@ -10,6 +10,6 @@ showcase.addEventListener("load", async () => {
 })
 
 export const changeContent = (content) => {
-    const source = `modules/matterport/matterport_bundle/showcase.html?&play=1&applicationKey=${MATTERPORT_KEY}&m=${content}`;
+    const source = `modules/matterport/matterport_bundle/showcase.html?&play=1&applicationKey=${MATTERPORT_KEY}&m=${content}&search=0&title=0`;
     showcase.setAttribute("src", source);
 }
