@@ -2,14 +2,14 @@ import { supervizSdk } from "./modules/superviz/supervizSdk.js"
 import { changeContent, matterportSdk } from './modules/matterport/matterportSdk.js'
 const CONTENT_SYNC_PROPERTY = "content";
 let changedContent = false;
-let matterportAdapterInstance = null;
+let matterportPluginInstance = null;
 
 // load first model
 changeContent("v4LWLiLDm3s");
 
-function connectAdapter() {
-    const adapter = new window.MatterportAdapter(matterportSdk);
-    matterportAdapterInstance = supervizSdk.connectAdapter(adapter, {
+function loadPlugin() {
+    const plugin = new window.MatterportPlugin(matterportSdk);
+    matterportPluginInstance = supervizSdk.loadPlugin(plugin, {
         avatarConfig: {
             height: 0,
             scale: 1
@@ -20,7 +20,7 @@ function connectAdapter() {
 }
 
 // joined meeting
-supervizSdk.subscribe(SuperVizSdk.MeetingEvent.MY_USER_JOINED, () => {
+supervizSdk.subscribe(SuperVizSdk.MeetingEvent.MY_PARTICIPANT_JOINED, () => {
     document.getElementById("wrapper").style.display = "none";
     // interface buttons to change content
     document.getElementById('v4LWLiLDm3s').onclick = function () {
@@ -55,7 +55,7 @@ supervizSdk.subscribe(SuperVizSdk.MeetingEvent.MY_USER_JOINED, () => {
         document.getElementsByClassName('project-name')[3].classList.remove('active')
         document.getElementById('toTRYzoAMdT').getElementsByClassName('project-name')[0].classList.add('active')
     };
-    connectAdapter();
+    loadPlugin();
 });
 // interface buttons to open close
 document.getElementById('collapsedButton').onclick = function () {
@@ -71,9 +71,9 @@ const sendSyncCommand = function (index) {
 
 // receive change content sync
 supervizSdk.subscribe(CONTENT_SYNC_PROPERTY, function (newModelSid) {
-    if (matterportAdapterInstance) { // disconnect from adapter if there is one
-        supervizSdk.disconnectAdapter();
-        matterportAdapterInstance = null;
+    if (matterportPluginInstance) { // disconnect from plugin if there is one
+        supervizSdk.unloadPlugin();
+        matterportPluginInstance = null;
         changedContent = true;
     }
     changeContent(newModelSid) // send change content to matterport // see modules/matterport/matterportSdk.js
@@ -82,6 +82,6 @@ supervizSdk.subscribe(CONTENT_SYNC_PROPERTY, function (newModelSid) {
 // received matterport loaded new content
 export const onContentChanged = () => {
     if (changedContent) {
-        connectAdapter(); // reconnect adapter
+        loadPlugin(); // reconnect plugin
     }
 }

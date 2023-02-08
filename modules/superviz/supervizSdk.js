@@ -6,14 +6,14 @@ let roomId = url.searchParams.get('roomId');
 let userType = url.searchParams.get('user-type');
 
 export const supervizSdk = await SuperVizSdk.init(DEVELOPER_KEY, {
-    userGroup: {
+    group: {
         id: "<GROUP-ID>",
         name: "<GROUP-NAME>"
     },
-    user: {
-        id: Math.random().toFixed(1), 
+    participant: {
+        id: Math.random().toFixed(1),
         name: userName ? userName : undefined,
-        isHostCandidate: userType === 'host',
+        type: userType,
     },
     roomId: roomId,
     defaultAvatars: true,
