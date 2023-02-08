@@ -12,7 +12,8 @@ function loadPlugin() {
     matterportPluginInstance = supervizSdk.loadPlugin(plugin, {
         avatarConfig: {
             height: 0,
-            scale: 1
+            scale: 1,
+            laserOrigin: { x: 0.2, y: -0.2, z: 0 }
         },
         isAvatarsEnabled: true,
         isLaserEnabled: true,
