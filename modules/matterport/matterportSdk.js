@@ -1,4 +1,4 @@
-const MATTERPORT_KEY = "xqsh9qz29p3nn5y9ya36eezfa";
+const MATTERPORT_KEY = "<MATTERPORT_DEVELOPER_KEY>";
 const showcase = document.getElementById("showcase");
 const showcaseWindow = showcase.contentWindow;
 import { onContentChanged } from './../../index.js'
