@@ -3,9 +3,15 @@ import { changeContent, matterportSdk } from './modules/matterport/matterportSdk
 const CONTENT_SYNC_PROPERTY = "content";
 let changedContent = false;
 let matterportPluginInstance = null;
+const iframeMeetingSettings = document.getElementById("sv-video-frame");
 
 // load first model
 changeContent("v4LWLiLDm3s");
+
+// verify if meeting settings iframe is loaded
+iframeMeetingSettings.addEventListener("load", function() {
+    document.getElementById("loader-ms").style.display = "none";
+});
 
 function loadPlugin() {
     const plugin = new window.MatterportPlugin(matterportSdk);
