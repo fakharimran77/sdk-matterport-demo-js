@@ -3,21 +3,29 @@ import { changeContent, matterportSdk } from './modules/matterport/matterportSdk
 const CONTENT_SYNC_PROPERTY = "content";
 let changedContent = false;
 let matterportPluginInstance = null;
+const iframeMeetingSettings = document.getElementById("sv-video-frame");
 
 let currentContent;
 
 let myParticipant;
 let participantList = []
 
+// verify if meeting settings iframe is loaded
+iframeMeetingSettings.addEventListener("load", function() {
+    document.getElementById("loader-ms").style.display = "none";
+});
+
 function loadPlugin() {
     const plugin = new window.MatterportPlugin(matterportSdk);
     matterportPluginInstance = supervizSdk.loadPlugin(plugin, {
         avatarConfig: {
             height: 0,
-            scale: 1
+            scale: 1,
+            laserOrigin: { x: 0.2, y: -0.2, z: 0 }
         },
         isAvatarsEnabled: true,
-        isPointersEnabled: true
+        isLaserEnabled: true,
+        isNameEnabled: true
     });
 }
 

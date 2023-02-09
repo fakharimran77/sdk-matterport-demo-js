@@ -2,7 +2,7 @@
 <html lang="en">
 
 <head>
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
 	<meta charset="UTF-8">
 	<title>Superviz MatterportJS DEMO</title>
 	<link rel="icon" href="modules/public/images/favicon.png" />
@@ -28,8 +28,11 @@
 				<div class="text-side-ready">
 					<sv-demo-image id="sv-demo-image"
 						name="https://production.cdn.superviz.com/static/threejs-icon-set.png"></sv-demo-image>
-					<sv-demo-title-left id="sv-demo-title" name="Your meeting has been created. Click next to join.">
+					<sv-demo-title-left id="sv-demo-title" name="Your meeting has been created.">
 					</sv-demo-title-left>
+					<div id="loader-ms" class="loader-wrapper">
+						<div class="loader"></div>
+					</div>
 				</div>
 			</div>
 		</div>
@@ -48,7 +51,7 @@
 				</div>
 				<div class="demo">
 					<div class="projects-list">
-						<a id="v4LWLiLDm3s" class="link" href="#">
+						<a id="v4LWLiLDm3s" class="link">
 							<div class="project-thumb">
 								<img
 									src="https://my.matterport.com/api/v1/player/models/v4LWLiLDm3s/thumb?width=1403&dpr=2&disable=upscale" />
@@ -57,7 +60,7 @@
 								Explore The Elms in 3D
 							</div>
 						</a>
-						<a id="zWpt6DAXDJw" class="link" href="#">
+						<a id="zWpt6DAXDJw" class="link">
 							<div class="project-thumb">
 								<img
 									src="https://my.matterport.com/api/v1/player/models/zWpt6DAXDJw/thumb?width=1083&dpr=2&disable=upscale" />
@@ -66,7 +69,7 @@
 								Explore Warehouse Virtual Staging in 3D
 							</div>
 						</a>
-						<a id="KSParQVSEKy" class="link" href="#">
+						<a id="KSParQVSEKy" class="link">
 							<div class="project-thumb">
 								<img
 									src="https://my.matterport.com/api/v1/player/models/KSParQVSEKy/thumb?width=1083&dpr=2&disable=upscale" />
@@ -75,7 +78,7 @@
 								Explore Casa Nostra in 3D
 							</div>
 						</a>
-						<a id="toTRYzoAMdT" class="link" href="#">
+						<a id="toTRYzoAMdT" class="link">
 							<div class="project-thumb">
 								<img
 									src="https://my.matterport.com/api/v1/player/models/toTRYzoAMdT/thumb?width=1083&dpr=2&disable=upscale" />
@@ -89,7 +92,6 @@
 			</aside>
 			<iframe id="showcase" class="sv-matterport-iframe" allowfullscreen allow="xr-spatial-tracking"
 				frameborder=”0”></iframe>
-			<!-- <iframe id="showcase" frameborder=”0” allowfullscreen></iframe> -->
 		</section>
 	</main>
 </body>
@@ -125,8 +127,9 @@
 	}
 
 	.img-button {
-        border: 0px;
+		border: 0px;
 	}
+
 	.collapse-button {
 		border-radius: 20px;
 		background-size: 10px;
@@ -247,6 +250,30 @@
 	.active {
 		color: #6210CC !important;
 	}
+
+	.loader-wrapper {
+		margin-top: 16px;
+	}
+
+	.loader {
+		border: 4px solid #6210CC;
+		border-top: 4px solid #C1FBDF;
+		border-radius: 50%;
+		width: 60px;
+		height: 60px;
+		animation: spin 1s linear infinite;
+	}
+
+	@keyframes spin {
+		0% {
+			transform: rotate(0deg);
+		}
+
+		100% {
+			transform: rotate(360deg);
+		}
+	}
+
 	@media screen and (max-width: 935px) {
 		.wrapper {
 			display: none;

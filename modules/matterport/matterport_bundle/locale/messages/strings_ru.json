@@ -287,6 +287,7 @@
       "HAVE_NONE_RESOLVED": "У вас пока нет закрытых примечаний.",
       "ATTACHMENTS": "%{smart_count} прикрепленный файл |||| %{smart_count} прикрепленных файла |||| %{smart_count} прикрепленных файлов |||| %{smart_count} прикрепленного файла",
       "RESULTS": "%{smart_count} результат |||| %{smart_count} результата |||| %{smart_count} результатов |||| %{smart_count} результата",
+      "COMMENTS": "%{smart_count} Comment |||| %{smart_count} Comments",
       "NOTES": "%{smart_count} примечание |||| %{smart_count} примечания |||| %{smart_count} примечаний |||| %{smart_count} примечания",
       "REPLIES": "%{smart_count} ответ |||| %{smart_count} ответа |||| %{smart_count} ответов |||| %{smart_count} ответа",
       "CONTENT_DELETED": "Исходный материал удален",
@@ -330,7 +331,15 @@
     },
     "SEARCH": {
       "QUERY_PLACEHOLDER": "Поиск по пространству",
+      "SEARCH_IN_TOOL_PLACEHOLDER": "Search",
       "CLEAR_SEARCH": "Очистить",
+      "FILTER_SEARCH": "Filter by",
+      "FILTER_SEARCH_ALL": "All",
+      "FILTER_SEARCH_REMOVE": "Remove Filter",
+      "GROUP_DATE": "Date",
+      "GROUP_DATE_SELECTED": "By Date",
+      "GROUP_LAYER": "Group",
+      "GROUP_LAYER_SELECTED": "By Group",
       "GROUP_FLOOR": "Этаж",
       "GROUP_FLOOR_SELECTED": "По этажу",
       "GROUP_TYPE": "Тип",
@@ -343,9 +352,9 @@
       "ADVANCED_SEARCH_TITLE": "Режим расширенного поиска"
     },
     "SUBSCRIBER_PROMPT": {
-      "BANNER_CTA_LINK_TEXT": "О сервисе Matterport",
-      "POPUP_CTA_HEADING": "Ваше пространство — в 3D!",
-      "POPUP_CTA_LINK_TEXT": "Скачивайте приложение Matterport!"
+      "BANNER_CTA_LINK_TEXT": "Ваше пространство — в 3D!",
+      "POPUP_CTA_LINK_TEXT": "Скачивайте приложение Matterport!",
+      "POPUP_CTA_HEADING": "Start sharing in 3D today"
     },
     "SUMMARY": {
       "HEADING": "Информация о Space",
@@ -376,7 +385,7 @@
     "HLR_HELP_MESSAGE": "Используйте Highlight Reel, чтобы направлять посетителей в важные места вашего Space.",
     "LABELS": "Метки",
     "LABELS_HELP_MESSAGE": "Метки — это краткие описания, которые можно связать с комнатой в Space.",
-    "LAYERS": "Layers",
+    "LAYERS": "Search & Organize",
     "LAYERS_HELP_MESSAGE": "Layers are used to group data elements together.",
     "MATTERTAGS": "Теги Mattertag",
     "MATTERTAGS_HELP_MESSAGE": "Теги Mattertag — отличный способ выделить особенности, предоставить дополнительную информацию и добавить контекст к Space.",
@@ -710,6 +719,9 @@
       "NEW_VIEW_NAME_PLACEHOLDER": "Название нового вида",
       "VIEW_DUPLICATE_NAME_SUFFIX": "(копия)",
       "ADD_VIEW_ITEM": "Добавить вид",
+      "DELETE_LAYER_ITEM": "Delete",
+      "DELETE_LAYER_MODAL_TITLE": "Delete Group",
+      "DELETE_LAYER_MODAL_MESSAGE": "Are you sure you want to delete this group?",
       "DELETE_VIEW_ITEM": "Удалить",
       "DELETE_VIEW_MODAL_TITLE": "Удалить вид",
       "DELETE_VIEW_MODAL_MESSAGE": "Вы точно хотите удалить этот вид?",
@@ -1169,5 +1181,8 @@
   },
   "ZOOM": "Масштабирование",
   "ZOOM_IN": "Увеличить",
-  "ZOOM_OUT": "Уменьшить"
+  "ZOOM_OUT": "Уменьшить",
+  "SDK": {
+    "AWAITING": "Awaiting a valid SDK connection"
+  }
 }

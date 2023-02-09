@@ -1,3 +1,5 @@
+/// <reference types="webxr" />
+
 import * as THREE from 'three';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer';
 
@@ -173,13 +175,6 @@ export interface Dictionary<ItemT> {
 export interface IDisposable {
 	dispose(): void;
 }
-/**
- * Options to provide when connecting the sdk
- */
-export declare type ConnectOptions = {
-	/** A token to provide access to a model */
-	auth: string;
-};
 declare function disconnect(): void;
 export declare namespace App {
 	enum Event {
@@ -1810,7 +1805,7 @@ export interface Mattertag {
 	  * var tagDiscPosition = mpSdk.Mattertag.getDiscPosition(mattertags[0]);
 	  * ```
 	  */
-	getDiscPosition(tag: Mattertag.MattertagData, result?: Vector3): Vector3;
+	getDiscPosition(tag: Mattertag.MattertagData | Mattertag.ObservableMattertagData, result?: Vector3): Vector3;
 	/**
 	 * Add one or more Mattertags to Showcase.
 	 * Each input Mattertag supports setting the label, description, color, anchorPosition, and stemVector.
@@ -2583,7 +2578,7 @@ export interface Pointer {
 	 * Change the texture of the pointer reticle.
 	 *
 	 * ```typescript
-	 * await mpSdk.Pointer.registerTexture('customTextureId', 'https://[link.to/image]');
+	 * await mpSdk.Asset.registerTexture('customTextureId', 'https://[link.to/image]');
 	 *
 	 * // change the texture of the pointer reticle using a previously registered id.
 	 * await mpSdk.Pointer.editTexture('customTextureId');
@@ -2592,7 +2587,8 @@ export interface Pointer {
 	 * @param textureId The id of the texture to apply.
 	 *
 	 * @embed
-	 * @bundle 3.1.55.2-34-ga9934ccd93
+	 * @bundle
+	 * @introduced 3.1.55.2-34-ga9934ccd93
 	 */
 	editTexture(textureId: string): Promise<void>;
 	/**
@@ -2602,7 +2598,8 @@ export interface Pointer {
 	 * ```
 	 *
 	 * @embed
-	 * @bundle 3.1.55.2-34-ga9934ccd93
+	 * @bundle
+	 * @introduced 3.1.55.2-34-ga9934ccd93
 	 */
 	resetTexture(): Promise<void>;
 	/**
@@ -2610,7 +2607,8 @@ export interface Pointer {
 	 * @param props face properties
 	 *
 	 * @embed
-	 * @bundle 3.1.55.2-34-ga9934ccd93
+	 * @bundle
+	 * @introduced 3.1.55.2-34-ga9934ccd93
 	 */
 	setFadeProps(props: Pointer.FadeProps): Promise<void>;
 	/**
@@ -2618,7 +2616,8 @@ export interface Pointer {
 	 * @param visible pointer reticle visibility
 	 *
 	 * @embed
-	 * @bundle 3.1.55.2-34-ga9934ccd93
+	 * @bundle
+	 * @introduced 3.1.55.2-34-ga9934ccd93
 	 */
 	setVisible(visible: boolean): Promise<void>;
 }
@@ -2800,11 +2799,1144 @@ export interface Room {
 	data: IObservableMap<Room.RoomData>;
 }
 /**
+ * Our Sensor system allows for generating spatial queries to understand a Matterport digital twin.
+ * By utilizing and setting up Sources around the scene, some questions that can be answered are:
+ * - "what things are currently visible on screen?"
+ * - "what things are near me?"
+ *
+ * where "things" can be Mattertag posts, sweeps, arbitrary locations (that you choose), or any combination of those.
+ */
+export declare namespace Sensor {
+	enum SensorType {
+		CAMERA = "sensor.sensortype.camera"
+	}
+	enum SourceType {
+		SPHERE = "sensor.sourcetype.sphere",
+		BOX = "sensor.sourcetype.box",
+		CYLINDER = "sensor.sourcetype.cylinder"
+	}
+	/**
+	 * A Sensor that detects Sources and provides information about the reading of each.
+	 */
+	interface ISensor extends IObservable<ISensor> {
+		/** The world-space position of the sensor. */
+		origin: Vector3;
+		/** The world-space "forward" direction describing which direction the sensor is facing. */
+		forward: Vector3;
+		/**
+		 * Add a source, to add its readings to the set of readings provided by `.subscribe`.
+		 * @param sources
+		 */
+		addSource(...sources: ISource[]): void;
+		/**
+		 * Start receiving updates when properties of this sensor change, e.g. `origin` or `forward`, not its `readings`.<br>
+		 * Subscribe to `readings` to receive updates about associated `ISources`
+		 */
+		subscribe<DataT>(observer: IObserver<DataT> | ObserverCallback<DataT>): ISubscription;
+		/**
+		 * An observable used to get information about assocated `ISources` added with [[ISensor.addSource]]
+		 */
+		readings: {
+			/**
+			 * Start receiving updates about the current set of sources added to this sensor.
+			 * @param observer
+			 */
+			subscribe(observer: ISensorObserver): ISubscription;
+		};
+		/**
+		 * Show debug visuals for this sensor. Existing visuals are disposed.
+		 * @param show
+		 */
+		showDebug(show: boolean): void;
+		/**
+		 * Teardown and cleanup the sensor, and stop receiving updates.
+		 */
+		dispose(): void;
+	}
+	type SphereVolume = {
+		/** The origin of the sphere. */
+		origin: Vector3;
+		/** The distance from origin of the sphere volume. */
+		radius: number;
+	};
+	type BoxVolume = {
+		/** The center position of the box. */
+		center: Vector3;
+		/** The length, width, and depth of the box volume. */
+		size: Vector3;
+		/** The orientation of the box. The rotations are applied in yaw, pitch, then roll order. */
+		orientation: Orientation;
+	};
+	type CylinderVolume = {
+		/** The point which defines the position (base) from which the height in the +Y, and radius in the XZ-plane are relative to. */
+		basePoint: Vector3;
+		/** The height of the cylinder. */
+		height: number;
+		/** The radius of the cylinder. */
+		radius: number;
+	};
+	/**
+	 * A Source represents a volume that will be detected by a Sensor.
+	 * The type of the source, describes the type of volume associated with it.
+	 * For example, with a `type` of `SourceType.SPHERE` the `volume` is a `SphereVolume`; a `SourceType.BOX` has a `BoxVolume`.
+	 */
+	interface ISource<Volume = SphereVolume | BoxVolume | CylinderVolume, UserData extends Record<string, unknown> = Record<string, unknown>> {
+		/** The type of source. */
+		type: SourceType;
+		/** The volume that represents the range of emissions from this `ISource`. */
+		volume: Volume;
+		/** Arbitrary data that can be used to set additional metadata, for example. */
+		userData: UserData;
+		/**
+		 * Let the sensor system know there is an update to this `ISource`.<br>
+		 * When changing any properties on `volume`, no changes will be reflected on the source or in Showcase until `commit` is called.
+		 */
+		commit(): Promise<void>;
+	}
+	/**
+	 * A specialized [[IMapObserver]] which maps an `ISource` to its current `SensorReading`.
+	 */
+	interface ISensorObserver {
+		/** Called when a the first `reading` is added from `source`. */
+		onAdded?(source: ISource, reading: SensorReading, collection: Map<ISource, SensorReading>): void;
+		/** Called when `source` and its `reading` is removed. */
+		onRemoved?(source: ISource, reading: SensorReading, collection: Map<ISource, SensorReading>): void;
+		/** Called when an existing `reading` is altered from `source`. */
+		onUpdated?(source: ISource, reading: SensorReading, collection: Map<ISource, SensorReading>): void;
+		/** Called when a set of changes happens within the `collection`. */
+		onCollectionUpdated?(collection: Map<ISource, SensorReading>): void;
+	}
+	/**
+	 * Information about the Source as read by the Sensor.
+	 */
+	type SensorReading = {
+		/** The sensor is currently within the broadcast range of the source. */
+		inRange: boolean;
+		/** The sensor is within the source's broadcast range and the sensor has clear line of sight to the source. */
+		inView: boolean;
+		/** The distance between the sensor and the source. */
+		distance: number;
+		/** The squared distance from the sensor to the source. */
+		distanceSquared: number;
+		/** The world-space direction from the sensor to the source. */
+		direction: Vector3;
+	};
+	/**
+	 * Additional `userData` to associate with an `ISource` when creating it.
+	 * This is a free dictionary that can contain any key/values deemed necessary.
+	 */
+	type SourceOptions<UserData extends Record<string, unknown> = Record<string, unknown>> = {
+		userData: UserData;
+	};
+}
+export interface Sensor {
+	SensorType: typeof Sensor.SensorType;
+	SourceType: typeof Sensor.SourceType;
+	/**
+	 * Create an [[`ISensor`]] which can sense and provide information about [[`ISource`]].
+	 *
+	 * ```typescript
+	 * const sensor = await mpSdk.Sensor.createSensor(mpSdk.Sensor.SensorType.CAMERA);
+	 * // add sources from calls to `Sensor.createSource()`
+	 * sensor.addSource(...sources);
+	 * // start listening for changes to the sensor's readings
+	 * sensor.readings.subscribe({
+	 *   onAdded(source, reading) {
+	 *     console.log(source.userData.id, 'has a reading of', reading);
+	 *   },
+	 *   onUpdated(source, reading) {
+	 *     console.log(source.userData.id, 'has an updated reading');
+	 *     if (reading.inRange) {
+	 *       console.log(source.userData.id, 'is currently in range');
+	 *       if (reading.inView) {
+	 *         console.log('... and currently visible on screen');
+	 *       }
+	 *     }
+	 *   }
+	 * });
+	 * ```
+	 */
+	createSensor(type: Sensor.SensorType.CAMERA): Promise<Sensor.ISensor>;
+	/**
+	 * Create a spherical [[`ISource`]] which can be sensed by an [[`ISensor`]].<br>
+	 * A shallow copy of `options.userData` is applied to the Source upon creation.
+	 *
+	 * Omitting `options.origin` will default the source's `volume.origin` to `{ x: 0, y: 0, z: 0 }`.<br>
+	 * Omitting `options.radius` will default the source's `volume.radius` to `Infinity`.
+	 *
+	 * ```typescript
+	 * const sources: Array<Sensor.ISource<Sensor.SphereVolume, { id: string }>> = await Promise.all([
+	 *   mpSdk.Sensor.createSource(mpSdk.Sensor.SourceType.SPHERE, {
+	 *     origin: { x: 1, y: 2, z: 3 },
+	 *     radius: 20,
+	 *     userData: {
+	 *       id: 'sphere-source-1',
+	 *     },
+	 *   }),
+	 *   mpSdk.Sensor.createSource(mpSdk.Sensor.SourceType.SPHERE, {
+	 *     radius: 4,
+	 *     userData: {
+	 *       id: 'sphere-source-2',
+	 *     },
+	 *   }),
+	 * ]);
+	 * // attach to a sensor previously created with `Sensor.createSensor()`
+	 * sensor.addSource(...sources);
+	 * ```
+	 * @param options
+	 */
+	createSource<UserData extends Record<string, unknown> = Record<string, unknown>>(type: Sensor.SourceType.SPHERE, options: Partial<Sensor.SphereVolume & Sensor.SourceOptions<UserData>>): Promise<Sensor.ISource<Sensor.SphereVolume, UserData>>;
+	/**
+	 * Create an box shaped [[`ISource`]] which can be sensed by an [[`ISensor`]].<br>
+	 * A shallow copy of `options.userData` is applied to the Source upon creation.
+	 *
+	 * Omitting `options.center` will default the source's `volume.center` to `{ x: 0, y: 0, z: 0 }`.<br>
+	 * Omitting `options.size` will default the source's `volume.size` to `{ x: Infinity, y: Infinity, z: Infinity }`.
+	 * Omitting `options.orientation` will default the source's `volume.orientatin` to `{ yaw: 0, pitch: 0, roll: 0 }`.
+	 *
+	 * ```typescript
+	 * const sources: Array<Sensor.ISource<Sensor.BoxVolume, { id: string }>> = await Promise.all([
+	 *   mpSdk.Sensor.createSource(mpSdk.Sensor.SourceType.BOX, {
+	 *     center: { x: 1, y: 1, z: 1 },
+	 *     size: { x: 2, y: 1, z: 2 },
+	 *     userData: {
+	 *       id: 'box-source-1',
+	 *     },
+	 *   }),
+	 *   mpSdk.Sensor.createSource(mpSdk.Sensor.SourceType.BOX, {
+	 *     size: { x: 2: y: 2, z: 2 },
+	 *     orientation: { yaw: 45, pitch: 45, roll: 45 },
+	 *     userData: {
+	 *       id: 'box-source-2',
+	 *     },
+	 *   }),
+	 * ]);
+	 * // attach to a sensor previously created with `Sensor.createSensor()`
+	 * sensor.addSource(...sources);
+	 * ```
+	 * @param options
+	 */
+	createSource<UserData extends Record<string, unknown> = Record<string, unknown>>(type: Sensor.SourceType.BOX, options: Partial<Sensor.BoxVolume & Sensor.SourceOptions<UserData>>): Promise<Sensor.ISource<Sensor.BoxVolume, UserData>>;
+	/**
+	 * Create a cylindrical [[`ISource`]] which can be sensed by an [[`ISensor`]].<br>
+	 * A shallow copy of `options.userData` is applied to the Source upon creation.
+	 *
+	 * Omitting `options.basePoint` will default the source's `volume.basePoint` to `{ x: 0, y: 0, z: 0 }`.<br>
+	 * Omitting `options.radius` will default the source's `volume.radius` to `Infinity`.<br>
+	 * Omitting `options.height` will default the source's `volume.height` to `Infinity`.
+	 *
+	 * ```typescript
+	 * const sources: Array<Sensor.ISource<Sensor.CylinderVolume, { id: string }>> = await Promise.all([
+	 *   mpSdk.Sensor.createSource(mpSdk.Sensor.SourceType.CYLINDER, {
+	 *     basePoint: { x: 0, y: 0, z: 0 },
+	 *     radius: 2,
+	 *     height: 5,
+	 *     userData: {
+	 *       id: 'cylinder-source-1',
+	 *     },
+	 *   }),
+	 *   mpSdk.Sensor.createSource(mpSdk.Sensor.SourceType.CYLINDER, {
+	 *     basePoint: { x: 1, y: 2, z: 3 },
+	 *     radius: 3,
+	 *     userData: {
+	 *       id: 'cylinder-source-2',
+	 *     },
+	 *   }),
+	 * ]);
+	 * // attach to a sensor previously created with `Sensor.createSensor()`
+	 * sensor.addSource(...sources);
+	 * ```
+	 */
+	createSource<UserData extends Record<string, unknown> = Record<string, unknown>>(type: Sensor.SourceType.CYLINDER, options: Partial<Sensor.CylinderVolume & Sensor.SourceOptions<UserData>>): Promise<Sensor.ISource<Sensor.CylinderVolume, UserData>>;
+}
+export declare namespace Settings { }
+export interface Settings {
+	/**
+	 * This function returns the value of a setting if it exists, if it does not currently exist, it will return undefined.
+	 *
+	 * ```
+	 * mpSdk.Settings.get('labels')
+	 *   .then(function(data) {
+	 *     // Setting retrieval complete.
+	 *     console.log('Labels setting: ' + data);
+	 *   })
+	 *   .catch(function(error) {
+	 *     // Setting  retrieval error.
+	 *   });
+	 * ```
+	 */
+	get(key: string): Promise<any | undefined>;
+	/**
+	 * This function updates the value of a setting if it exists, returning the new value when it is set
+	 *
+	 * ```
+	 * mpSdk.Settings.update('labels', false)
+	 *   .then(function(data) {
+	 *     // Setting update complete.
+	 *     console.log('Labels setting: ' + data);
+	 *   })
+	 *   .catch(function(error) {
+	 *     // Setting update error.
+	 *   });
+	 * ```
+	 */
+	update(key: string, value: any): Promise<void>;
+}
+export declare namespace Tag {
+	enum AttachmentType {
+		/** An unknown type of attachment. This should never happen */
+		UNKNOWN = "tag.attachment.unknown",
+		APPLICATION = "tag.attachment.application",
+		AUDIO = "tag.attachment.audio",
+		/** The attachment contains an image */
+		IMAGE = "tag.attachment.image",
+		/** The attachment contains rich content like an iframe of another site */
+		MODEL = "tag.attachment.model",
+		PDF = "tag.attachment.pdf",
+		RICH = "tag.attachment.rich",
+		TEXT = "tag.attachment.text",
+		/** The attachment contains a video */
+		VIDEO = "tag.attachment.video",
+		ZIP = "tag.attachment.zip",
+		/** The attachment is a sandbox created by a call to [[Tag.registerSandbox]] */
+		SANDBOX = "tag.attachment.sandbox"
+	}
+	type TagData = {
+		id: string;
+		anchorPosition: Vector3;
+		stemVector: Vector3;
+		stemVisible: boolean;
+		label: string;
+		description: string;
+		color: Color;
+		roomId: string;
+		/** The ids of the attachments currently attached to this tag */
+		attachments: string[];
+	};
+	/**
+	 * Things such as media, etc that can be attached to a Tag.
+	 * Attachments are the new equivalent to Media in Mattertags.
+	 */
+	type Attachment = {
+		id: string;
+		src: string;
+		type: AttachmentType;
+	};
+	/**
+	 * A subset of the TagData used when adding Tags.
+	 * Most properties are optional except those used for positioning: `anchorPosition`, `stemVector`.
+	 */
+	type Descriptor = {
+		anchorPosition: Vector3;
+		stemVector: Vector3;
+		stemVisible?: boolean;
+		label?: string;
+		description?: string;
+		color?: Color;
+		opacity?: number;
+		attachments?: string[];
+	};
+	type PositionOptions = {
+		anchorPosition: Vector3;
+		stemVector: Vector3;
+		roomId: string;
+	};
+	type StemHeightEditOptions = {
+		stemHeight: number;
+		stemVisible: boolean;
+	};
+	type EditableProperties = {
+		label: string;
+		description: string;
+	};
+	type SandboxOptions = {
+		/**
+		 * A map for the three global functions we provide in your sandbox.
+		 * Only needs to be used if scripts you are importing also have a global `send`, `on`, `off`, or `tag`.
+		 */
+		globalVariableMap: GlobalVariableMap;
+		/**
+		 * A human readable name that will be used as the `src` in the attachments collection.
+		 */
+		name: string;
+		/**
+		 * The size of the sandbox to display
+		 * Providing `0` as one of the dimensions will instead use the default: 150px for height, 100% for width.
+		 */
+		size: Size;
+	};
+	/**
+	 * Map the globals we provide in your sandbox to other names.
+	 */
+	type GlobalVariableMap = {
+		send?: string;
+		on?: string;
+		off?: string;
+		tag?: string;
+	};
+	/**
+	 * A messaging object to send and receive messages to and from your iframe sandbox.
+	 */
+	interface IMessenger {
+		/**
+		 * Send a messages of type `eventType` to the iframe sandbox with any optional data associated with the message
+		 */
+		send(eventType: string, ...args: any[]): void;
+		/**
+		 * Add a handler for messages of type `eventType` from the iframe sandbox
+		 */
+		on(eventType: string, eventHandler: (...args: any[]) => void): void;
+		/**
+		 * Remove a handler for messages of type `eventType` from the iframe sandbox
+		 */
+		off(eventType: string, eventHandler: (...args: any[]) => void): void;
+	}
+	/**
+	 * The actions that can be taken when interacting with a tag
+	 */
+	type AllowableActions = {
+		/** Whether the tag can be opened via a mouse hover */
+		opening: boolean;
+		/** Whether navigation towared the tag will occur when clicked */
+		navigating: boolean;
+	};
+}
+export interface Tag {
+	AttachmentType: typeof Tag.AttachmentType;
+	/**
+	 * An observable collection of the [[Attachment]].
+	 *
+	 * ```typescript
+	 * mpSdk.Tag.attachments.subscribe({
+	 *   onAdded: function (index, item, collection) {
+	 *     console.log('An attachemnt was added to the collection', index, item, collection);
+	 *   },
+	 *   onCollectionUpdated(collection) {
+	 *     console.log('The entire collection of attachments', collection);
+	 *   },
+	 * });
+	 * ```
+	 *
+	 * @embed
+	 * @bundle
+	 * @introduced 3.1.68.12-7-g858688944a
+	 */
+	attachments: IObservableMap<Tag.Attachment>;
+	/**
+	 * Attach [[Attachment]] to a Tag.
+	 *
+	 * ```typescript
+	 * const tagId: string; // ... acquired through a previous call to `mpSdk.Tag.add` or through `mpSdk.Tag.data`
+	 * const attachmentIds: string[]; // ... acquired through a previous call to `mpSdk.Tag.registerAttachment` or through `mpSdk.Tag.attachments`
+	 *
+	 * mpSdk.Tag.attach(tagId, ...attachmentIds);
+	 * // or
+	 * mpSdk.Tag.attach(tagId, attachmentId[0], attachmentId[1]);
+	 * ```
+	 *
+	 * @param tagId
+	 * @param attachmentId
+	 * @return A promise that resolves when the Attachment is added to the Tag
+	 *
+	 * @embed
+	 * @bundle
+	 * @introduced 3.1.68.12-7-g858688944a
+	 */
+	attach(tagId: string, ...attachmentIds: string[]): Promise<void>;
+	/**
+	 * Detach [[Attachment]] from a Tag.
+	 *
+	 * ```typescript
+	 * const tagId: string; // ... acquired through a previous call to `mpSdk.Tag.add` or through `mpSdk.Tag.data`
+	 * const attachmentIds: string[]; // ... acquired through a previous call to `mpSdk.Tag.registerAttachment` or through `mpSdk.Tag.attachments`
+	 *
+	 * mpSdk.Tag.detach(tagId, ...attachmentIds);
+	 * // or
+	 * mpSdk.Tag.detach(tagId, attachmentId[0], attachmentId[1]);
+	 * ```
+	 *
+	 * @param tagId
+	 * @param attachmentIds
+	 * @introduced 3.1.70.10-0-ge9cb83b28c
+	 */
+	detach(tagId: string, ...attachmentIds: string[]): Promise<void>;
+	/**
+	 * Register a new [[Attachment]] that can later be attached as media to a Tag.
+	 *
+	 * Custom HTML can be added as an attachment through the use of [[registerSandbox]] instead.
+	 *
+	 * ```typescript
+	 * // register a couple of attachments to use later
+	 * const [attachmentId1, attachmentId2] = mpSdk.Tag.registerAttachment(
+	 *   'https://[link.to/media]',
+	 *   'https://[link.to/other_media]',
+	 * );
+	 * ```
+	 * @param srcs The src URLs of the media
+	 * @return A promise that resolves to an array of ids associated with the newly added Attachments
+	 *
+	 * @embed
+	 * @bundle
+	 * @introduced 3.1.68.12-7-g858688944a
+	 */
+	registerAttachment(...srcs: string[]): Promise<string[]>;
+	/**
+	 * Register an HTML sandbox that diplays custom HTML and runs custom scripts as an attachment.
+	 * Data can be sent and received from the sandbox by using the returned [[IMessenger]].
+	 *
+	 * ```typescript
+	 * const htmlToInject = `
+	 *   <style>
+	 *     button {
+	 *       width: 100px;
+	 *       height: 50px;
+	 *     }
+	 *   </style>
+	 *   <button id='btn1'>CLICK ME</button>
+	 *   <script>
+	 *     var btn1 = document.getElementById('btn1');
+	 *     btn1.addEventListener('click', () => {
+	 *       // send data out of the sandbox
+	 *       window.send('buttonClick', 12345);
+	 *     });
+	 *     // receive data from outside of the sandbox
+	 *     window.on('updateButton', (newLabel, color) => {
+	 *       btn1.innerText = newLabel;
+	 *       btn1.style.backgroundColor = color;
+	 *     });
+	 *   </script>
+	 * `;
+	 *
+	 * // create and register the sandbox
+	 * const [sandboxId, messenger] = await mpSdk.Tag.registerSandbox(htmlToInject);
+	 * // attach the sandbox to a tag
+	 * mpSdk.Tag.attach(tagId, sandboxId);
+	 * // receive data from the sandbox
+	 * messenger.on('buttonClick', (buttonId) => {
+	 *   console.log('clicked button with id:', buttonId);
+	 * });
+	 * // send data to the sandbox
+	 * messenger.send('I send messages', 'red');
+	 * ```
+	 *
+	 * @param html
+	 * @param options
+	 * @returns An [[IMessenger]] that can be used to communicate with the sandbox by sending and receiving data
+	 *
+	 * @embed
+	 * @bundle
+	 * @introduced 3.1.70.10-0-ge9cb83b28c
+	 */
+	registerSandbox(html: string, options?: Partial<Tag.SandboxOptions>): Promise<[
+		string,
+		Tag.IMessenger
+	]>;
+	/**
+	 * An observable collection of Tag data that can be subscribed to.
+	 *
+	 * When first subscribing, the current set of Tags will call the observer's `onAdded` for each Tag as the data becomes available.
+	 *
+	 * ```typescript
+	 * mpSdk.Tag.data.subscribe({
+	 *   onAdded(index, item, collection) {
+	 *     console.log('Tag added to the collection', index, item, collection);
+	 *   },
+	 *   onRemoved(index, item, collection) {
+	 *     console.log('Tag removed from the collection', index, item, collection);
+	 *   },
+	 *   onUpdated(index, item, collection) {
+	 *     console.log('Tag updated in place in the collection', index, item, collection);
+	 *   }
+	 *   onCollectionUpdated(collection) {
+	 *     console.log('The full collection of Tags looks like', collection);
+	 *   }
+	 * });
+	 * ```
+	 *
+	 * @embed
+	 * @bundle
+	 * @introduced 3.1.68.12-7-g858688944a
+	 */
+	data: IObservableMap<Tag.TagData>;
+	/**
+	 * Add one or more Tags to Showcase.
+	 * Each input Tag supports setting the label, description, color or icon, anchorPosition, stemVector, and attachments.
+	 *
+	 * Two properties are required:
+	 * - `anchorPosition`, the point where the tag connects to the model
+	 * - `stemVector`, the direction, aka normal, and height that the Tag stem points
+	 *
+	 * See [[Pointer.intersection]] for a way to retrieve a new `anchorPosition` and `stemVector`.
+	 *
+	 * **Note**: these changes are not persisted between refreshes of Showcase. They are only valid for the current browser session.
+	 * They also do not have "share" buttons as they associated with them.
+	 *
+	 * ```typescript
+	 * mpSdk.Tag.add({
+	 *  label: 'New tag',
+	 *  description: 'This tag was added through the Matterport SDK',
+	 *  anchorPosition: {
+	 *    x: 0,
+	 *    y: 0,
+	 *    z: 0,
+	 *  },
+	 *  stemVector: { // make the Tag stick straight up and make it 0.30 meters (~1 foot) tall
+	 *    x: 0,
+	 *    y: 0.30,
+	 *    z: 0,
+	 *  },
+	 *  color: { // blue disc
+	 *    r: 0.0,
+	 *    g: 0.0,
+	 *    b: 1.0,
+	 *  },
+	 * }, {
+	 *  label: 'New tag 2',
+	 *  anchorPosition: {
+	 *    x: 1,
+	 *    y: 2,
+	 *    z: 3,
+	 *  },
+	 *  stemVector: {
+	 *    x: ,
+	 *    y: ,
+	 *    z: ,
+	 *  }
+	 * });
+	 * ```
+	 *
+	 * @param tags The descriptors for all Tags to be added.
+	 * @returns A promise that resolves with the arary of ids for the newly added Tags.
+	 *
+	 * @embed
+	 * @bundle
+	 * @introduced 3.1.68.12-7-g858688944a
+	 */
+	add(...tags: Tag.Descriptor[]): Promise<string[]>;
+	/**
+	 * Sets the allowed "default" Showcase actions on a Tag from occurring: hover to open billboard, click to navigate to view.
+	 * If an action is ommited from the actions argument, it will be considered false by default.
+	 *
+	 * ```typescript
+	 * const tagIds: string[]; // ... acquired through previous calls to `mpSdk.Tag.add` or through `mpSdk.Tag.data`
+	 *
+	 * // prevent navigating to the tag on click
+	 * const noNavigationTag = tagIds[0];
+	 * mpSdk.Tag.allowAction(noNavigationTag, {
+	 *   opening: true,
+	 *   // implies navigating: false
+	 * });
+	 *
+	 * // prevent the billboard from showing
+	 * const noBillboardTag = tagIds[1];
+	 * mpSdk.Tag.allowAction(noBillboardTag, {
+	 *   navigating: true,
+	 *   // implies opening: false
+	 * });
+	 *
+	 * const noActionsTag = tagIds[2];
+	 * mpSdk.Tag.allowAction(noActionsTag, {
+	 *   // implies opeing: false and navigating: false
+	 * });
+	 * ```
+	 *
+	 * @param id The id of the Tag to change the allowed actions
+	 * @param actions The set of actions allowed on the Tag
+	 *
+	 * @embed
+	 * @bundle
+	 * @introduced 3.1.68.12-7-g858688944a
+	 */
+	allowAction(id: string, actions: Partial<Tag.AllowableActions>): Promise<void>;
+	/**
+	 * Edit the text content in a Tag's billboard.
+	 *
+	 * **Note**: these changes are not persisted between refreshes of Showcase. They are only valid for the current browser session.
+	 *
+	 * ```typescript
+	 * mpSdk.Tag.editBillboard(id, {
+	 *   label: 'This is a new title',
+	 *   description: 'This image was set dynamically by the Showcase sdk',
+	 * });
+	 * ```
+	 * @param id the id of the Tag to edit
+	 * @param properties A dictionary of properties to set
+	 *
+	 * @embed
+	 * @bundle
+	 * @introduced 3.1.68.12-7-g858688944a
+	 */
+	editBillboard(id: string, properties: Partial<Tag.EditableProperties>): Promise<void>;
+	/**
+	 * Edit the color of a Tag's disc.
+	 *
+	 * ```typescript
+	 * const tagIds: string[]; // ... acquired through previous calls to `mpSdk.Tag.add` or through `mpSdk.Tag.data`
+	 *
+	 * // change the first Tag to yellow
+	 * mpSdk.Tag.editColor(tagIds[0], {
+	 *   r: 0.9,
+	 *   g: 0,
+	 *   b: 0.9,
+	 * });
+	 * ```
+	 *
+	 * @param id The id of the Tag to edit
+	 * @param color The new color to be applied to the Tag disc
+	 *
+	 * @embed
+	 * @bundle
+	 * @introduced 3.1.68.12-7-g858688944a
+	 */
+	editColor(id: string, color: Color): Promise<void>;
+	/**
+	 * Change the icon of the Tag disc
+	 *
+	 * **Note**: these changes are not persisted between refreshes of Showcase. They are only valid for the current browser session.
+	 *
+	 * ```typescript
+	 * // change the icon of the Tag using the id used in a previous [[Asset.registerTexture]] call
+	 * mpSdk.Tag.editIcon(id, 'customIconId');
+	 * ```
+	 *
+	 * @param tagId The id of the Tag to edit
+	 * @param iconId The id of the icon to apply
+	 *
+	 * @embed
+	 * @bundle
+	 * @introduced 3.1.68.12-7-g858688944a
+	 */
+	editIcon(tagId: string, iconId: string): Promise<void>;
+	/**
+	 * Edit the opacity of a Tag.
+	 *
+	 * A completely transparent/invisible Tag is still interactable and will respond to mouse hovers and clicks.
+	 *
+	 * ```typescript
+	 * const tagIds: string[]; // ... acquired through previous calls to `mpSdk.Tag.add` or through `mpSdk.Tag.data`
+	 * // make the first Tag invisible
+	 * mpSdk.Tag.editOpacity(tagIds[0], 0);
+	 *
+	 * // make another Tag transparent
+	 * mpSdk.Tag.editOpacity(tagIds[1], 0.5);
+	 *
+	 * // and another completely opaque
+	 * mpSdk.Tag.editOpacity(tagIds[2], 1);
+	 * ```
+	 *
+	 * @param id The id of the Tag to edit
+	 * @param opacity The target opacity for the Tag in the range of [0, 1]
+	 *
+	 * @embed
+	 * @bundle
+	 * @introduced 3.1.68.12-7-g858688944a
+	 */
+	editOpacity(id: string, opacity: number): Promise<void>;
+	/**
+	 * Edit the stem of a Tag
+	 *
+	 * ```typescript
+	 * const tagId: string = tagData[0].id; // ... acquired through a previous call to `mpSdk.Tag.add` or through `mpSdk.Tag.data`
+	 *
+	 * // make the first Tag have an invsible stem
+	 * mpSdk.Tag.editStem(tagId, {stemVisible: false});
+	 *
+	 * // make another Tag have a long stem
+	 * mpSdk.Tag.editStem(tagId, {stemHeight: 1});
+	 *
+	 *
+	 * @param tagSid The sid of the Tag to edit
+	 * @param stemOptions What to change about the Tag's stem - can include stemHeight and stemVisible
+	 * @introduced 3.1.70.10-0-ge9cb83b28c
+	 */
+	editStem(tagSid: string, options: Partial<Tag.StemHeightEditOptions>): Promise<void>;
+	/**
+	 * Move and reorient a Tag.
+	 *
+	 * See [[Pointer.intersection]] for a way to retrieve a new `anchorPosition` and `stemVector`.
+	 *
+	 * **Note**: these changes are not persisted between refreshes of Showcase. They are only valid for the current browser session.
+	 *
+	 * ```typescript
+	 * const tagId: string; // ... acquired through a previous call to `mpSdk.Tag.add` or through `mpSdk.Tag.data`
+	 *
+	 * mpSdk.Tag.editPosition(tagId, {
+	 *  anchorPosition: {
+	 *    x: 0,
+	 *    y: 0,
+	 *    z: 0,
+	 *  },
+	 *  stemVector: { // make the Tag stick straight up and make it 0.30 meters (~1 foot) tall
+	 *    x: 0,
+	 *    y: 0.30,
+	 *    z: 0,
+	 *  },
+	 * });
+	 * ```
+	 * @param id The id of the Tag to reposition
+	 * @param options The new anchorPosition, stemVector and/or roomId to associate the tag with.
+	 *
+	 * @embed
+	 * @bundle
+	 * @introduced 3.1.68.12-7-g858688944a
+	 */
+	editPosition(id: string, options: Partial<Tag.PositionOptions>): Promise<void>;
+	/**
+	 * Removes one or more Tags from Showcase.
+	 *
+	 * **Note**: these changes are not persisted between refreshes of Showcase. They are only valid for the current browser session.
+	 *
+	 * ```typescript
+	 * const tagIds: string[]; // ... acquired through a previous call to `mpSdk.Tag.add` or through `mpSdk.Tag.data`
+	 * // remove one tag
+	 * mpSdk.Tag.remove(tagIds[0]);
+	 *
+	 * // or remove multiple at the same time
+	 * mpSdk.Tag.remove(...tagIds);
+	 * ```
+	 * @param ids The Tags' ids to be removed.
+	 * @returns A promise with an array of Tag ids that were actually removed.
+	 *
+	 * @embed
+	 * @bundle
+	 * @introduced 3.1.68.12-7-g858688944a
+	 */
+	remove(...ids: string[]): Promise<string[]>;
+	/**
+	 * Resets the icon of the Tag disc back to its original icon.
+	 *
+	 * ```typescript
+	 * const tagIds: string[]; // ... acquired through a previous call to `mpSdk.Tag.add` or through `mpSdk.Tag.data`
+	 *
+	 * // reset the icon of the first Tag to its original
+	 * mpSdk.Tag.resetIcon(tagIds[0].id);
+	 * ```
+	 *
+	 * @param id The id of the Tag to reset
+	 *
+	 * @embed
+	 * @bundle
+	 * @introduced 3.1.68.12-7-g858688944a
+	 */
+	resetIcon(id: string): Promise<void>;
+}
+/**
+ * Sample custom tour.
+ *
+ * ```
+ * const connect = function(sdk) {
+ *   const mpSdk = sdk;
+ *
+ *   mpSdk.Tour.Event.on(Tour.Event.STEPPED, function(tourIndex){
+ *     console.log('Tour index ' + tourIndex);
+ *   });
+ *   mpSdk.Tour.Event.on(Tour.Event.STARTED, function(){
+ *     console.log('Tour started');
+ *   });
+ *   mpSdk.Tour.Event.on(Tour.Event.STOPPED, function(){
+ *     console.log('Tour stopped');
+ *   });
+ *
+ *   mpSdk.Tour.getData()
+ *     .then(function(tour) {
+ *       console.log('tour has ' + tour.length + ' stops');
+ *       return mpSdk.Tour.start(0);
+ *     })
+ *     .then(function(){
+ *       // console 'Tour started'
+ *       // console -> 'Tour index 0'
+ *       return mpSdk.Tour.next();
+ *     })
+ *     .then(function(){
+ *       // console -> 'Tour index 1'
+ *       return mpSdk.Tour.step(3);
+ *     })
+ *     .then(function(){
+ *       // console -> 'Tour index 3'
+ *       return mpSdk.Tour.prev();
+ *     })
+ *     .then(function(){
+ *       // console -> 'Tour index 2'
+ *       // console -> 'Tour stopped'
+ *       return mpSdk.Tour.stop();
+ *     });
+ * }
+ * ```
+ *
+ */
+export declare namespace Tour {
+	type Snapshot = {
+		sid: string;
+		thumbnailUrl: string;
+		imageUrl: string;
+		is360: boolean;
+		name: string;
+		mode: Mode.Mode | undefined;
+		position: Vector3;
+		rotation: Vector3;
+		zoom: number;
+	};
+	enum Event {
+		/** @event */
+		STARTED = "tour.started",
+		/** @event */
+		STOPPED = "tour.stopped",
+		/** @event */
+		ENDED = "tour.ended",
+		/** @event */
+		STEPPED = "tour.stepped"
+	}
+	type CurrentStepData = {
+		step: string | null;
+	};
+	enum PlayState {
+		INACTIVE = "tour.inactive",
+		ACTIVE = "tour.active",
+		STOP_SCHEDULED = "tour.stopscheduled"
+	}
+	type CurrentStateData = {
+		current: PlayState;
+	};
+	type CurrentTransitionData = {
+		from: string | null;
+		to: string | null;
+	};
+}
+export declare interface Tour {
+	Event: typeof Tour.Event;
+	PlayState: typeof Tour.PlayState;
+	/**
+	 * This function starts the tour.
+	 *
+	 * ```
+	 * const tourIndex = 1;
+	 *
+	 * mpSdk.Tour.start(tourIndex)
+	 *   .then(function() {
+	 *     // Tour start complete.
+	 *   })
+	 *   .catch(function(error) {
+	 *     // Tour start error.
+	 *   });
+	 * ```
+	 *
+	 * @embed
+	 * @bundle
+	 */
+	start(index?: number): Promise<void>;
+	/**
+	 * This function stops the tour.
+	 *
+	 * ```
+	 * mpSdk.Tour.stop()
+	 *   .then(function() {
+	 *     // Tour stop complete.
+	 *   })
+	 *   .catch(function(error) {
+	 *     // Tour stop error.
+	 *   });
+	 * ```
+	 *
+	 * @embed
+	 * @bundle
+	 */
+	stop(): Promise<void>;
+	/**
+	 * This function moves the camera to a specific snapshot in the tour.
+	 *
+	 * ```
+	 * const myStep = 2;
+	 * mpSdk.Tour.step(myStep)
+	 *   .then(function() {
+	 *     //Tour step complete.
+	 *   })
+	 *   .catch(function(error) {
+	 *     // Tour step error.
+	 *   });
+	 * ```
+	 *
+	 * @embed
+	 * @bundle
+	 */
+	step(index: number): Promise<void>;
+	/**
+	 * This function moves the camera to the next snapshot in the tour.
+	 *
+	 * ```
+	 * mpSdk.Tour.next()
+	 *   .then(function() {
+	 *     // Tour next complete.
+	 *   })
+	 *   .catch(function(error) {
+	 *     // Tour next error.
+	 *   });
+	 * ```
+	 *
+	 * @embed
+	 * @bundle
+	 */
+	next(): Promise<void>;
+	/**
+	 * This function moves the camera to the previous snapshot in the tour.
+	 *
+	 * ```
+	 * mpSdk.Tour.prev()
+	 *   .then(function() {
+	 *     // Tour prev complete.
+	 *   })
+	 *   .catch(function(error) {
+	 *     // Tour prev error.
+	 *   });
+	 * ```
+	 *
+	 * @embed
+	 * @bundle
+	 */
+	prev(): Promise<void>;
+	/**
+	 * This function returns an array of Snapshots.
+	 *
+	 * ```
+	 * mpSdk.Tour.getData()
+	 *   .then(function(snapshots) {
+	 *     // Tour getData complete.
+	 *     if(snapshots.length > 0){
+	 *       console.log('First snapshot sid: ' + snapshots[0].sid);
+	 *       console.log('First snapshot name: ' + snapshots[0].name);
+	 *       console.log('First snapshot position: ' + snapshots[0].position);
+	 *     }
+	 *   })
+	 *   .catch(function(error) {
+	 *     // Tour getData error.
+	 *   });
+	 * ```
+	 *
+	 * @embed
+	 * @bundle
+	 */
+	getData(): Promise<Tour.Snapshot[]>;
+	/**
+	 * The zero-indexed current Tour step.
+	 * The step will be null if no Tour is currently playing.
+	 *
+	 * ```
+	 * mpSdk.Tour.currentStep.subscribe(function (current) {
+	 *   // the step index has changed
+	 *   // 0 for the first step, 1 for the second, etc.
+	 *   console.log('Current step is ', current.step);
+	 * });
+	 * ```
+	 *
+	 * @embed
+	 * @bundle
+	 * @introduced 3.1.68.12-7-g858688944a
+	 */
+	currentStep: IObservable<Tour.CurrentStepData>;
+	/**
+	 * An observable state of the current Tour. Returns a Tour.PlayState of
+	 * `INACTIVE` (no tour in progress), `ACTIVE` (tour in progress), or `STOP_SCHEDULED`
+	 * (tour in progress, but a stop has been queued by the user or automatically by the tour ending).
+	 *
+	 * ```
+	 * mpSdk.Tour.state.subscribe(function (state) {
+	 *   // the state has changed
+	 *   console.log('Current state is ', state.current);
+	 * });
+	 * ```
+	 *
+	 * @embed
+	 * @bundle
+	 * @introduced 3.1.68.12-7-g858688944a
+	 */
+	state: IObservable<Tour.CurrentStateData>;
+	/**
+	 * An observable representing the current Tour's transition.
+	 *
+	 * `{ from: string | null, to: string | null }`.
+	 *
+	 * `from` can be `null` when transitioning from outside of a tour. `from` and `to` will both be `null` when
+	 * there is no active transition.
+	 *
+	 * ```
+	 * mpSdk.Tour.transition.subscribe(function (transition) {
+	 *   // the transition has changed
+	 *   console.log('Current transition is ', transition.from, transition.to);
+	 * });
+	 * ```
+	 *
+	 * @embed
+	 * @bundle
+	 * @introduced 3.1.68.12-7-g858688944a
+	 */
+	transition: IObservable<Tour.CurrentTransitionData>;
+}
+interface Emitter {
+	/** Start listening for an event */
+	on: typeof on;
+	/** Stop listening for an event */
+	off: typeof off;
+}
+declare function off(event: any, callback: (...any: any[]) => void): Emitter;
+declare function on(event: App.Event.PHASE_CHANGE, callback: (app: App.Phase) => void): Emitter;
+declare function on(event: Camera.Event.MOVE, callback: (pose: Camera.Pose) => void): Emitter;
+declare function on(event: Floor.Event.CHANGE_START, callback: (to: number, from: number) => void): Emitter;
+declare function on(event: Floor.Event.CHANGE_END, callback: (floorIndex: number, floorName: string) => void): Emitter;
+declare function on(event: Label.Event.POSITION_UPDATED, callback: (labelData: Label.Label[]) => void): Emitter;
+declare function on(event: Mattertag.Event.HOVER, callback: (tagSid: string, hovering: boolean) => void): Emitter;
+declare function on(event: Mattertag.Event.CLICK, callback: (tagSid: string) => void): Emitter;
+declare function on(event: Mattertag.Event.LINK_OPEN, callback: (tagSid: string, url: string) => void): Emitter;
+declare function on(event: Mode.Event.CHANGE_START, callback: (oldMode: string, newMode: string) => void): Emitter;
+declare function on(event: Mode.Event.CHANGE_END, callback: (oldMode: string, newMode: string) => void): Emitter;
+declare function on(event: Model.Event.MODEL_LOADED, callback: (model: Model.ModelData) => void): Emitter;
+declare function on(event: Sweep.Event.ENTER, callback: (oldSweep: string, newSweep: string) => void): Emitter;
+declare function on(event: Sweep.Event.EXIT, callback: (fromSweep: string, toSweep: string | undefined) => void): Emitter;
+declare function on(event: Tour.Event.STARTED, callback: () => void): Emitter;
+declare function on(event: Tour.Event.STOPPED, callback: () => void): Emitter;
+declare function on(event: Tour.Event.ENDED, callback: () => void): Emitter;
+declare function on(event: Tour.Event.STEPPED, callback: (activeIndex: number) => void): Emitter;
+/**
+ * The entire MP Sdk returned from a successful call to `MP_SDK.connect` on the [[ShowcaseEmbedWindow]].
+ *
+ * ```typescript
+ * const sdk: CommonMpSdk = await window.MP_SDK.connect(...);
+ * ```
+ */
+export declare type CommonMpSdk = {
+	App: App;
+	Asset: Asset;
+	Camera: Camera;
+	Conversion: Conversion;
+	Floor: Floor;
+	Graph: Graph;
+	Label: Label;
+	Link: Link;
+	Mattertag: Mattertag;
+	Measurements: Measurements;
+	Mode: Mode;
+	Model: Model;
+	OAuth: OAuth;
+	Pointer: Pointer;
+	Renderer: Renderer;
+	Room: Room;
+	Sensor: Sensor;
+	Settings: Settings;
+	Sweep: Sweep;
+	Tag: Tag;
+	Tour: Tour;
+	on: typeof on;
+	off: typeof off;
+	disconnect: typeof disconnect;
+};
+export declare namespace CommonMpSdk {
+	export { Color, ConditionCallback, Dictionary, ICondition, IMapObserver, IObservable, IObservableMap, IObserver, ISubscription, ObserverCallback, Orientation, Rotation, Size, Vector2, Vector3, };
+	export { App, Asset, Camera, Conversion, Floor, Graph, Label, Link, Mattertag, Measurements, Mode, Model, OAuth, Pointer, Renderer, Room, Sensor, Settings, Sweep, Tag, Tour, };
+}
+/**
  * The Scene namespace is currently only available for Bundle SDK distributions.
  * [Learn more about the Bundle SDK](https://matterport.github.io/showcase-sdk/sdkbundle_home.html)
  */
 export declare namespace Scene {
-	export enum ComponentType {
+	export enum Component {
 		OBJ_LOADER = "mp.objLoader",
 		FBX_LOADER = "mp.fbxLoader",
 		DAE_LOADER = "mp.daeLoader",
@@ -2819,7 +3951,7 @@ export declare namespace Scene {
 		INPUT = "mp.input",
 		XR = "mp.xr"
 	}
-	export type SceneComponentName = `${ComponentType}` | (string & {});
+	export type SceneComponentName = `${Component}` | (string & {});
 	interface LightComponentCommonOptions {
 		/** If true the ambient light is active in the scene.
 		 *
@@ -2869,8 +4001,8 @@ export declare namespace Scene {
 		colliderEnabled?: boolean;
 	}
 	export interface SceneComponentOptions extends Record<SceneComponentName, any> {
-		[ComponentType.AMBIENT_LIGHT]: LightComponentCommonOptions;
-		[ComponentType.DIRECTIONAL_LIGHT]: LightComponentCommonOptions & {
+		[Component.AMBIENT_LIGHT]: LightComponentCommonOptions;
+		[Component.DIRECTIONAL_LIGHT]: LightComponentCommonOptions & {
 			/** The world space position of the directional light.
 			 *
 			 * Default `{ x: 1, y: 5, z: 1}`
@@ -2887,7 +4019,7 @@ export declare namespace Scene {
 			 */
 			debug?: boolean;
 		};
-		[ComponentType.POINT_LIGHT]: LightComponentCommonOptions & {
+		[Component.POINT_LIGHT]: LightComponentCommonOptions & {
 			/** The world space position of the point light.
 			 *
 			 * Default `{ x: 1, y: 5, z: 1 }`
@@ -2909,17 +4041,17 @@ export declare namespace Scene {
 			 */
 			debug?: boolean;
 		};
-		[ComponentType.GLTF_LOADER]: LoaderCommonOptions;
-		[ComponentType.DAE_LOADER]: LoaderCommonOptions;
-		[ComponentType.FBX_LOADER]: LoaderCommonOptions;
-		[ComponentType.OBJ_LOADER]: LoaderCommonOptions & {
+		[Component.GLTF_LOADER]: LoaderCommonOptions;
+		[Component.DAE_LOADER]: LoaderCommonOptions;
+		[Component.FBX_LOADER]: LoaderCommonOptions;
+		[Component.OBJ_LOADER]: LoaderCommonOptions & {
 			/** The url to the material file.
 			 *
 			 * Default `''`
 			 */
 			materialUrl?: string;
 		};
-		[ComponentType.TRANSFORM_CONTROLS]: {
+		[Component.TRANSFORM_CONTROLS]: {
 			/** If true the transform control is visible in the scene.
 			 *
 			 * Default `true`
@@ -2956,7 +4088,7 @@ export declare namespace Scene {
 			 */
 			size?: number;
 		};
-		[ComponentType.INPUT]: {
+		[Component.INPUT]: {
 			/** If true, events will be available for binding or spying. If false, no events will fire.
 			 *
 			 * Default `true`
@@ -2973,7 +4105,7 @@ export declare namespace Scene {
 			 */
 			unfiltered?: boolean;
 		};
-		[ComponentType.CAMERA]: {
+		[Component.CAMERA]: {
 			/** If true, this components acquires control of the camera.
 			 *
 			 * Default `false`
@@ -2985,7 +4117,7 @@ export declare namespace Scene {
 			 */
 			camera?: THREE.Camera | null;
 		};
-		[ComponentType.XR]: Record<string, never>;
+		[Component.XR]: Record<string, never>;
 		[name: string]: unknown;
 	}
 	export type PredefinedOutputs = {
@@ -2999,8 +4131,11 @@ export declare namespace Scene {
 		collider: THREE.Object3D | null;
 	};
 	export enum InteractionType {
+		/** CLICK events */
 		CLICK = "INTERACTION.CLICK",
+		/** HOVER events */
 		HOVER = "INTERACTION.HOVER",
+		/** DRAG events (mousedown then move) */
 		DRAG = "INTERACTION.DRAG",
 		DRAG_BEGIN = "INTERACTION.DRAG_BEGIN",
 		DRAG_END = "INTERACTION.DRAG_END",
@@ -3133,7 +4268,7 @@ export declare namespace Scene {
 	 */
 	export interface IComponentContext {
 		/**
-		 * The r124 three.js module.
+		 * The three.js module.
 		 */
 		three: typeof THREE;
 		/**
@@ -3820,6 +4955,7 @@ export declare namespace Scene {
 	export {};
 }
 export interface Scene {
+	Componet: typeof Scene.Component;
 	InteractionType: typeof Scene.InteractionType;
 	PathType: typeof Scene.PathType;
 	/**
@@ -3958,1090 +5094,64 @@ export interface Scene {
 	registerComponents(components: Scene.IComponentDesc[]): Promise<IDisposable[] | null>;
 	unregisterComponents(components: Scene.IComponentDesc[]): Promise<void>;
 }
-/**
- * Our Sensor system allows for generating spatial queries to understand a Matterport digital twin.
- * By utilizing and setting up Sources around the scene, some questions that can be answered are:
- * - "what things are currently visible on screen?"
- * - "what things are near me?"
- *
- * where "things" can be Mattertag posts, sweeps, arbitrary locations (that you choose), or any combination of those.
- */
-export declare namespace Sensor {
-	enum SensorType {
-		CAMERA = "sensor.sensortype.camera"
-	}
-	enum SourceType {
-		SPHERE = "sensor.sourcetype.sphere",
-		BOX = "sensor.sourcetype.box",
-		CYLINDER = "sensor.sourcetype.cylinder"
-	}
-	/**
-	 * A Sensor that detects Sources and provides information about the reading of each.
-	 */
-	interface ISensor extends IObservable<ISensor> {
-		/** The world-space position of the sensor. */
-		origin: Vector3;
-		/** The world-space "forward" direction describing which direction the sensor is facing. */
-		forward: Vector3;
-		/**
-		 * Add a source, to add its readings to the set of readings provided by `.subscribe`.
-		 * @param sources
-		 */
-		addSource(...sources: ISource[]): void;
-		/**
-		 * Start receiving updates when properties of this sensor change, e.g. `origin` or `forward`, not its `readings`.<br>
-		 * Subscribe to `readings` to receive updates about associated `ISources`
-		 */
-		subscribe<DataT>(observer: IObserver<DataT> | ObserverCallback<DataT>): ISubscription;
-		/**
-		 * An observable used to get information about assocated `ISources` added with [[ISensor.addSource]]
-		 */
-		readings: {
-			/**
-			 * Start receiving updates about the current set of sources added to this sensor.
-			 * @param observer
-			 */
-			subscribe(observer: ISensorObserver): ISubscription;
-		};
-		/**
-		 * Show debug visuals for this sensor. Existing visuals are disposed.
-		 * @param show
-		 */
-		showDebug(show: boolean): void;
-		/**
-		 * Teardown and cleanup the sensor, and stop receiving updates.
-		 */
-		dispose(): void;
-	}
-	type SphereVolume = {
-		/** The origin of the sphere. */
-		origin: Vector3;
-		/** The distance from origin of the sphere volume. */
-		radius: number;
+declare namespace R3F {
+	type ExternalR3FCallbacks = {
+		onFrame: () => void;
+		onSizeChange: (width: number, height: number) => void;
+		onPixelRatioChange: (ratio: number) => void;
 	};
-	type BoxVolume = {
-		/** The center position of the box. */
-		center: Vector3;
-		/** The length, width, and depth of the box volume. */
-		size: Vector3;
-		/** The orientation of the box. The rotations are applied in yaw, pitch, then roll order. */
-		orientation: Orientation;
-	};
-	type CylinderVolume = {
-		/** The point which defines the position (base) from which the height in the +Y, and radius in the XZ-plane are relative to. */
-		basePoint: Vector3;
-		/** The height of the cylinder. */
-		height: number;
-		/** The radius of the cylinder. */
-		radius: number;
-	};
-	/**
-	 * A Source represents a volume that will be detected by a Sensor.
-	 * The type of the source, describes the type of volume associated with it.
-	 * For example, with a `type` of `SourceType.SPHERE` the `volume` is a `SphereVolume`; a `SourceType.BOX` has a `BoxVolume`.
-	 */
-	interface ISource<Volume = SphereVolume | BoxVolume | CylinderVolume> {
-		/** The type of source. */
-		type: SourceType;
-		/** The volume that represents the range of emissions from this `ISource`. */
-		volume: Volume;
-		/** Arbitrary data that can be used to set additional metadata, for example. */
-		userData: Record<string, unknown>;
+	interface IContext {
 		/**
-		 * Let the sensor system know there is an update to this `ISource`.<br>
-		 * When changing any properties on `volume`, no changes will be reflected in Showcase until `commit` is called.
+		 * The showcase three.js renderer.<br>
+		 * See <a href="https://threejs.org/docs/#api/en/renderers/WebGLRenderer" target="_blank">https://threejs.org/docs/#api/en/renderers/WebGLRenderer</a>
 		 */
-		commit(): void;
+		renderer: THREE.WebGLRenderer;
+		/**
+		 * The showcase scene.<br>
+		 * See <a href="https://threejs.org/docs/#api/en/scenes/Scene" target="_blank">https://threejs.org/docs/#api/en/scenes/Scene</a>
+		 *
+		 */
+		scene: THREE.Scene;
+		/**
+		 * The main camera. It is read-only.<br>
+		 * See <a href="https://threejs.org/docs/#api/en/cameras/Camera" target="_blank">https://threejs.org/docs/#api/en/cameras/Camera</a>
+		 */
+		camera: THREE.PerspectiveCamera | THREE.OrthographicCamera;
+		/**
+		 * Function to register a R3F-created mesh with the events system.
+		 */
+		registerMeshEvents: (obj: THREE.Object3D) => ISubscription;
 	}
-	/**
-	 * A specialized [[IMapObserver]] which maps an `ISource` to its current `SensorReading`.
-	 */
-	interface ISensorObserver {
-		/** Called when a the first `reading` is added from `source`. */
-		onAdded?(source: ISource, reading: SensorReading, collection: Map<ISource, SensorReading>): void;
-		/** Called when `source` and its `reading` is removed. */
-		onRemoved?(source: ISource, reading: SensorReading, collection: Map<ISource, SensorReading>): void;
-		/** Called when an existing `reading` is altered from `source`. */
-		onUpdated?(source: ISource, reading: SensorReading, collection: Map<ISource, SensorReading>): void;
-		/** Called when a set of changes happens within the `collection`. */
-		onCollectionUpdated?(collection: Map<ISource, SensorReading>): void;
-	}
-	/**
-	 * Information about the Source as read by the Sensor.
-	 */
-	type SensorReading = {
-		/** The sensor is currently within the broadcast range of the source. */
-		inRange: boolean;
-		/** The sensor is within the source's broadcast range and the sensor has clear line of sight to the source. */
-		inView: boolean;
-		/** The distance between the sensor and the source. */
-		distance: number;
-		/** The squared distance from the sensor to the source. */
-		distanceSquared: number;
-		/** The world-space direction from the sensor to the source. */
-		direction: Vector3;
-	};
-	/**
-	 * Additional `userData` to associate with an `ISource` when creating it.
-	 * This is a free dictionary that can contain any key/values deemed necessary.
-	 */
-	type SourceOptions = {
-		userData: Record<string, unknown>;
-	};
 }
-export interface Sensor {
-	SensorType: typeof Sensor.SensorType;
-	SourceType: typeof Sensor.SourceType;
+interface R3F {
 	/**
-	 * Create an [[`ISensor`]] which can sense and provide information about [[`ISource`]].
-	 *
-	 * ```typescript
-	 * const sensor = await mpSdk.Sensor.createSensor(mpSdk.Sensor.SensorType.CAMERA);
-	 * // add sources from calls to `Sensor.createSource()`
-	 * sensor.addSource(...sources);
-	 * // start listening for changes to the sensor's readings
-	 * sensor.readings.subscribe({
-	 *   onAdded(source, reading) {
-	 *     console.log(source.userData.id, 'has a reading of', reading);
-	 *   },
-	 *   onUpdated(source, reading) {
-	 *     console.log(source.userData.id, 'has an updated reading');
-	 *     if (reading.inRange) {
-	 *       console.log(source.userData.id, 'is currently in range');
-	 *       if (reading.inView) {
-	 *         console.log('... and currently visible on screen');
-	 *       }
-	 *     }
-	 *   }
-	 * });
-	 * ```
+	 * Internal: function for `@matterport/r3f` `MatterportViewer` component to register
+	 * an externally managed react-three/fiber scene to render within showcase
+	 * @experimental
 	 */
-	createSensor(type: Sensor.SensorType.CAMERA): Promise<Sensor.ISensor>;
+	registerR3F(callbacks: R3F.ExternalR3FCallbacks): Promise<R3F.IContext>;
 	/**
-	 * Create a spherical [[`ISource`]] which can be sensed by an [[`ISensor`]].<br>
-	 * A shallow copy of `options.userData` is applied to the Source upon creation.
-	 *
-	 * Omitting `options.origin` will default the source's `volume.origin` to `{ x: 0, y: 0, z: 0 }`.<br>
-	 * Omitting `options.radius` will default the source's `volume.radius` to `Infinity`.
-	 *
-	 * ```
-	 * const sources = await Promise.all([
-	 *   mpSdk.Sensor.createSource(mpSdk.Sensor.SourceType.SPHERE, {
-	 *     origin: { x: 1, y: 2, z: 3 },
-	 *     radius: 20,
-	 *     userData: {
-	 *       id: 'sphere-source-1',
-	 *     },
-	 *   }),
-	 *   mpSdk.Sensor.createSource(mpSdk.Sensor.SourceType.SPHERE, {
-	 *     radius: 4,
-	 *     userData: {
-	 *       id: 'sphere-source-2',
-	 *     },
-	 *   }),
-	 * ]);
-	 * // attach to a sensor previously created with `Sensor.createSensor()`
-	 * sensor.addSource(...sources);
-	 * ```
-	 * @param options
+	 * Internal: function for `@matterport/r3f` npm package `MatterportFocusCamera` component
+	 * to manage navigation to look at a specific target
+	 * @experimental
 	 */
-	createSource(type: Sensor.SourceType.SPHERE, options: Sensor.SphereVolume & Sensor.SourceOptions): Promise<Sensor.ISource<Sensor.SphereVolume>>;
-	/**
-	 * Create an box shaped [[`ISource`]] which can be sensed by an [[`ISensor`]].<br>
-	 * A shallow copy of `options.userData` is applied to the Source upon creation.
-	 *
-	 * Omitting `options.center` will default the source's `volume.center` to `{ x: 0, y: 0, z: 0 }`.<br>
-	 * Omitting `options.size` will default the source's `volume.size` to `{ x: Infinity, y: Infinity, z: Infinity }`.
-	 * Omitting `options.orientation` will default the source's `volume.orientatin` to `{ yaw: 0, pitch: 0, roll: 0 }`.
-	 *
-	 * ```
-	 * const sources = await Promise.all([
-	 *   mpSdk.Sensor.createSource(mpSdk.Sensor.SourceType.BOX, {
-	 *     center: { x: 1, y: 1, z: 1 },
-	 *     size: { x: 2, y: 1, z: 2 },
-	 *     userData: {
-	 *       id: 'box-source-1',
-	 *     },
-	 *   }),
-	 *   mpSdk.Sensor.createSource(mpSdk.Sensor.SourceType.BOX, {
-	 *     size: { x: 2: y: 2, z: 2 },
-	 *     orientation: { yaw: 45, pitch: 45, roll: 45 },
-	 *     userData: {
-	 *       id: 'box-source-2',
-	 *     },
-	 *   }),
-	 * ]);
-	 * // attach to a sensor previously created with `Sensor.createSensor()`
-	 * sensor.addSource(...sources);
-	 * ```
-	 * @param options
-	 */
-	createSource(type: Sensor.SourceType.BOX, options: Sensor.BoxVolume & Sensor.SourceOptions): Promise<Sensor.ISource<Sensor.BoxVolume>>;
-	/**
-	 * Create a cylindrical [[`ISource`]] which can be sensed by an [[`ISensor`]].<br>
-	 * A shallow copy of `options.userData` is applied to the Source upon creation.
-	 *
-	 * Omitting `options.basePoint` will default the source's `volume.basePoint` to `{ x: 0, y: 0, z: 0 }`.<br>
-	 * Omitting `options.radius` will default the source's `volume.radius` to `Infinity`.<br>
-	 * Omitting `options.height` will default the source's `volume.height` to `Infinity`.
-	 * ```
-	 * const sources = await Promise.all([
-	 *   mpSdk.Sensor.createSource(mpSdk.Sensor.SourceType.CYLINDER, {
-	 *     basePoint: { x: 0, y: 0, z: 0 },
-	 *     radius: 2,
-	 *     height: 5,
-	 *     userData: {
-	 *       id: 'cylinder-source-1',
-	 *     },
-	 *   }),
-	 *   mpSdk.Sensor.createSource(mpSdk.Sensor.SourceType.CYLINDER, {
-		   basePoint: { x: 1, y: 2, z: 3 },
-		   radius: 3,
-	 *     userData: {
-	 *       id: 'cylinder-source-2',
-	 *     },
-	 *   }),
-	 * ]);
-	 * // attach to a sensor previously created with `Sensor.createSensor()`
-	 * sensor.addSource(...sources);
-	 * ```
-	 */
-	createSource(type: Sensor.SourceType.CYLINDER, options: Sensor.CylinderVolume & Sensor.SourceOptions): Promise<Sensor.ISource<Sensor.CylinderVolume>>;
-}
-export declare namespace Settings { }
-export interface Settings {
-	/**
-	 * This function returns the value of a setting if it exists, if it does not currently exist, it will return undefined.
-	 *
-	 * ```
-	 * mpSdk.Settings.get('labels')
-	 *   .then(function(data) {
-	 *     // Setting retrieval complete.
-	 *     console.log('Labels setting: ' + data);
-	 *   })
-	 *   .catch(function(error) {
-	 *     // Setting  retrieval error.
-	 *   });
-	 * ```
-	 */
-	get(key: string): Promise<any | undefined>;
-	/**
-	 * This function updates the value of a setting if it exists, returning the new value when it is set
-	 *
-	 * ```
-	 * mpSdk.Settings.update('labels', false)
-	 *   .then(function(data) {
-	 *     // Setting update complete.
-	 *     console.log('Labels setting: ' + data);
-	 *   })
-	 *   .catch(function(error) {
-	 *     // Setting update error.
-	 *   });
-	 * ```
-	 */
-	update(key: string, value: any): Promise<void>;
-}
-export declare namespace Tag {
-	enum AttachmentType {
-		/** An unknown type of attachment. This should never happen */
-		UNKNOWN = "tag.attachment.unknown",
-		APPLICATION = "tag.attachment.application",
-		AUDIO = "tag.attachment.audio",
-		/** The attachment contains an image */
-		IMAGE = "tag.attachment.image",
-		/** The attachment contains rich content like an iframe of another site */
-		MODEL = "tag.attachment.model",
-		PDF = "tag.attachment.pdf",
-		RICH = "tag.attachment.rich",
-		TEXT = "tag.attachment.text",
-		/** The attachment contains a video */
-		VIDEO = "tag.attachment.video",
-		ZIP = "tag.attachment.zip",
-		/** The attachment is a sandbox created by a call to [[Tag.registerSandbox]] */
-		SANDBOX = "tag.attachment.sandbox"
-	}
-	type TagData = {
-		id: string;
-		anchorPosition: Vector3;
-		stemVector: Vector3;
-		stemVisible: boolean;
-		label: string;
-		description: string;
-		color: Color;
-		roomId: string;
-		/** The ids of the attachments currently attached to this tag */
-		attachments: string[];
-	};
-	/**
-	 * Things such as media, etc that can be attached to a Tag.
-	 * Attachments are the new equivalent to Media in Mattertags.
-	 */
-	type Attachment = {
-		id: string;
-		src: string;
-		type: AttachmentType;
-	};
-	/**
-	 * A subset of the TagData used when adding Tags.
-	 * Most properties are optional except those used for positioning: `anchorPosition`, `stemVector`.
-	 */
-	type Descriptor = {
-		anchorPosition: Vector3;
-		stemVector: Vector3;
-		stemVisible?: boolean;
-		label?: string;
-		description?: string;
-		color?: Color;
-	};
-	type PositionOptions = {
-		anchorPosition: Vector3;
-		stemVector: Vector3;
-		roomId: string;
-	};
-	type StemHeightEditOptions = {
-		stemHeight: number;
-		stemVisible: boolean;
-	};
-	type EditableProperties = {
-		label: string;
-		description: string;
-	};
-	type SandboxOptions = {
-		/**
-		 * A map for the three global functions we provide in your sandbox.
-		 * Only needs to be used if scripts you are importing also have a global `send`, `on`, `off`, or `tag`.
-		 */
-		globalVariableMap?: GlobalVariableMap;
-		/**
-		 * A human readable name that will be used as the `src` in the attachments collection.
-		 */
-		name?: string;
-	};
-	/**
-	 * Map the globals we provide in your sandbox to other names.
-	 */
-	type GlobalVariableMap = {
-		send?: string;
-		on?: string;
-		off?: string;
-		tag?: string;
-	};
-	/**
-	 * A messaging object to send and receive messages to and from your iframe sandbox.
-	 */
-	interface IMessenger {
-		/**
-		 * Send a messages of type `eventType` to the iframe sandbox with any optional data associated with the message
-		 */
-		send(eventType: string, ...args: any[]): void;
-		/**
-		 * Add a handler for messages of type `eventType` from the iframe sandbox
-		 */
-		on(eventType: string, eventHandler: (...args: any[]) => void): void;
-		/**
-		 * Remove a handler for messages of type `eventType` from the iframe sandbox
-		 */
-		off(eventType: string, eventHandler: (...args: any[]) => void): void;
-	}
-	/**
-	 * The actions that can be taken when interacting with a tag
-	 */
-	type AllowableActions = {
-		/** Whether the tag can be opened via a mouse hover */
-		opening: boolean;
-		/** Whether navigation towared the tag will occur when clicked */
-		navigating: boolean;
-	};
-}
-export interface Tag {
-	AttachmentType: typeof Tag.AttachmentType;
-	/**
-	 * An observable collection of the [[Attachment]].
-	 *
-	 * ```typescript
-	 * mpSdk.Tag.attachments.subscribe({
-	 *   onAdded: function (index, item, collection) {
-	 *     console.log('An attachemnt was added to the collection', index, item, collection);
-	 *   },
-	 *   onCollectionUpdated(collection) {
-	 *     console.log('The entire collection of attachments', collection);
-	 *   },
-	 * });
-	 * ```
-	 *
-	 * @embed
-	 * @bundle
-	 * @introduced 3.1.68.12-7-g858688944a
-	 */
-	attachments: IObservableMap<Tag.Attachment>;
-	/**
-	 * Attach [[Attachment]] to a Tag.
-	 *
-	 * ```typescript
-	 * const tagId: string; // ... acquired through a previous call to `mpSdk.Tag.add` or through `mpSdk.Tag.data`
-	 * const attachmentIds: string[]; // ... acquired through a previous call to `mpSdk.Tag.registerAttachment` or through `mpSdk.Tag.attachments`
-	 *
-	 * mpSdk.Tag.attach(tagId, ...attachmentIds);
-	 * // or
-	 * mpSdk.Tag.attach(tagId, attachmentId[0], attachmentId[1]);
-	 * ```
-	 *
-	 * @param tagId
-	 * @param attachmentId
-	 * @return A promise that resolves when the Attachment is added to the Tag
-	 *
-	 * @embed
-	 * @bundle
-	 * @introduced 3.1.68.12-7-g858688944a
-	 */
-	attach(tagId: string, ...attachmentIds: string[]): Promise<void>;
-	/**
-	 * Detach [[Attachment]] from a Tag.
-	 *
-	 * ```typescript
-	 * const tagId: string; // ... acquired through a previous call to `mpSdk.Tag.add` or through `mpSdk.Tag.data`
-	 * const attachmentIds: string[]; // ... acquired through a previous call to `mpSdk.Tag.registerAttachment` or through `mpSdk.Tag.attachments`
-	 *
-	 * mpSdk.Tag.detach(tagId, ...attachmentIds);
-	 * // or
-	 * mpSdk.Tag.detach(tagId, attachmentId[0], attachmentId[1]);
-	 * ```
-	 *
-	 * @param tagId
-	 * @param attachmentIds
-	 * @introduced 3.1.70.10-0-ge9cb83b28c
-	 */
-	detach(tagId: string, ...attachmentIds: string[]): Promise<void>;
-	/**
-	 * Register a new [[Attachment]] that can later be attached as media to a Tag.
-	 *
-	 * Custom HTML can be added as an attachment through the use of [[registerSandbox]] instead.
-	 *
-	 * ```typescript
-	 * // register a couple of attachments to use later
-	 * const [attachmentId1, attachmentId2] = mpSdk.Tag.registerAttachment(
-	 *   'https://[link.to/media]',
-	 *   'https://[link.to/other_media]',
-	 * );
-	 * ```
-	 * @param srcs The src URLs of the media
-	 * @return A promise that resolves to an array of ids associated with the newly added Attachments
-	 *
-	 * @embed
-	 * @bundle
-	 * @introduced 3.1.68.12-7-g858688944a
-	 */
-	registerAttachment(...srcs: string[]): Promise<string[]>;
-	/**
-	 * Register an HTML sandbox that diplays custom HTML and runs custom scripts as an attachment.
-	 * Data can be sent and received from the sandbox by using the returned [[IMessenger]].
-	 *
-	 * ```typescript
-	 * const htmlToInject = `
-	 *   <style>
-	 *     button {
-	 *       width: 100px;
-	 *       height: 50px;
-	 *     }
-	 *   </style>
-	 *   <button id='btn1'>CLICK ME</button>
-	 *   <script>
-	 *     var btn1 = document.getElementById('btn1');
-	 *     btn1.addEventListener('click', () => {
-	 *       // send data out of the sandbox
-	 *       window.send('buttonClick', 12345);
-	 *     });
-	 *     // receive data from outside of the sandbox
-	 *     window.on('updateButton', (newLabel, color) => {
-	 *       btn1.innerText = newLabel;
-	 *       btn1.style.backgroundColor = color;
-	 *     });
-	 *   </script>
-	 * `;
-	 *
-	 * // create and register the sandbox
-	 * const [sandboxId, messenger] = await mpSdk.Tag.registerSandbox(tagId, htmlToInject);
-	 * // attach the sandbox to a tag
-	 * mpSdk.Tag.attach(tagId, sandboxId);
-	 * // receive data from the sandbox
-	 * messenger.on('buttonClick', (buttonId) => {
-	 *   console.log('clicked button with id:', buttonId);
-	 * });
-	 * // send data to the sandbox
-	 * messenger.send('I send messages', 'red');
-	 * ```
-	 *
-	 * @param html
-	 * @param options
-	 * @returns An [[IMessenger]] that can be used to communicate with the sandbox by sending and receiving data
-	 *
-	 * @embed
-	 * @bundle
-	 * @introduced 3.1.70.10-0-ge9cb83b28c
-	 */
-	registerSandbox(html: string, options?: Tag.SandboxOptions): Promise<[
-		string,
-		Tag.IMessenger
-	]>;
-	/**
-	 * An observable collection of Tag data that can be subscribed to.
-	 *
-	 * When first subscribing, the current set of Tags will call the observer's `onAdded` for each Tag as the data becomes available.
-	 *
-	 * ```typescript
-	 * mpSdk.Tag.data.subscribe({
-	 *   onAdded: function (index, item, collection) {
-	 *     console.log('Tag added to the collection', index, item, collection);
-	 *   },
-	 *   onRemoved: function (index, item, collection) {
-	 *     console.log('Tag removed from the collection', index, item, collection);
-	 *   },
-	 *   onUpdated: function (index, item, collection) {
-	 *     console.log('Tag updated in place in the collection', index, item, collection);
-	 *   }
-	 * });
-	 * ```
-	 *
-	 * @embed
-	 * @bundle
-	 * @introduced 3.1.68.12-7-g858688944a
-	 */
-	data: IObservableMap<Tag.TagData>;
-	/**
-	 * Add one or more Tags to Showcase.
-	 * Each input Tag supports setting the label, description, color or icon, anchorPosition, stemVector, and attachments.
-	 *
-	 * Two properties are required:
-	 * - `anchorPosition`, the point where the tag connects to the model
-	 * - `stemVector`, the direction, aka normal, and height that the Tag stem points
-	 *
-	 * See [[Pointer.intersection]] for a way to retrive a new `anchorPosition` and `stemVector`.
-	 *
-	 * **Note**: these changes are not persisted between refreshes of Showcase. They are only valid for the current browser session.
-	 *
-	 * ```typescript
-	 * mpSdk.Tag.add({
-	 *  label: 'New tag',
-	 *  description: 'This tag was added through the Matterport SDK',
-	 *  anchorPosition: {
-	 *    x: 0,
-	 *    y: 0,
-	 *    z: 0,
-	 *  },
-	 *  stemVector: { // make the Tag stick straight up and make it 0.30 meters (~1 foot) tall
-	 *    x: 0,
-	 *    y: 0.30,
-	 *    z: 0,
-	 *  },
-	 *  color: { // blue disc
-	 *    r: 0.0,
-	 *    g: 0.0,
-	 *    b: 1.0,
-	 *  },
-	 * }, {
-	 *  label: 'New tag 2',
-	 *  anchorPosition: {
-	 *    x: 1,
-	 *    y: 2,
-	 *    z: 3,
-	 *  },
-	 *  stemVector: {
-	 *    x: ,
-	 *    y: ,
-	 *    z: ,
-	 *  }
-	 * });
-	 * ```
-	 *
-	 * @param tags The descriptors for all Tags to be added.
-	 * @returns A promise that resolves with the arary of ids for the newly added Tags.
-	 *
-	 * @embed
-	 * @bundle
-	 * @introduced 3.1.68.12-7-g858688944a
-	 */
-	add(...tags: Tag.Descriptor[]): Promise<string[]>;
-	/**
-	 * Sets the allowed "default" Showcase actions on a Tag from occurring: hover to open billboard, click to navigate to view.
-	 * If an action is ommited from the actions argument, it will be considered false by default.
-	 *
-	 * ```typescript
-	 * const tagIds: string[]; // ... acquired through previous calls to `mpSdk.Tag.add` or through `mpSdk.Tag.data`
-	 *
-	 * // prevent navigating to the tag on click
-	 * const noNavigationTag = tagIds[0];
-	 * mpSdk.Tag.allowAction(noNavigationTag, {
-	 *   opening: true,
-	 *   // implies navigating: false
-	 * });
-	 *
-	 * // prevent the billboard from showing
-	 * const noBillboardTag = tagIds[1];
-	 * mpSdk.Tag.allowAction(noBillboardTag, {
-	 *   navigating: true,
-	 *   // implies opening: false
-	 * });
-	 *
-	 * const noActionsTag = tagIds[2];
-	 * mpSdk.Tag.allowAction(noActionsTag, {
-	 *   // implies opeing: false and navigating: false
-	 * });
-	 * ```
-	 *
-	 * @param id The id of the Tag to change the allowed actions
-	 * @param actions The set of actions allowed on the Tag
-	 *
-	 * @embed
-	 * @bundle
-	 * @introduced 3.1.68.12-7-g858688944a
-	 */
-	allowAction(id: string, actions: Partial<Tag.AllowableActions>): Promise<void>;
-	/**
-	 * Edit the text content in a Tag's billboard.
-	 *
-	 * **Note**: these changes are not persisted between refreshes of Showcase. They are only valid for the current browser session.
-	 *
-	 * ```typescript
-	 * mpSdk.Tag.editBillboard(id, {
-	 *   label: 'This is a new title',
-	 *   description: 'This image was set dynamically by the Showcase sdk',
-	 * });
-	 * ```
-	 * @param id the id of the Tag to edit
-	 * @param properties A dictionary of properties to set
-	 *
-	 * @embed
-	 * @bundle
-	 * @introduced 3.1.68.12-7-g858688944a
-	 */
-	editBillboard(id: string, properties: Partial<Tag.EditableProperties>): Promise<void>;
-	/**
-	 * Edit the color of a Tag's disc.
-	 *
-	 * ```typescript
-	 * const tagIds: string[]; // ... acquired through previous calls to `mpSdk.Tag.add` or through `mpSdk.Tag.data`
-	 *
-	 * // change the first Tag to yellow
-	 * mpSdk.Tag.editColor(tagIds[0], {
-	 *   r: 0.9,
-	 *   g: 0,
-	 *   b: 0.9,
-	 * });
-	 * ```
-	 *
-	 * @param id The id of the Tag to edit
-	 * @param color The new color to be applied to the Tag disc
-	 *
-	 * @embed
-	 * @bundle
-	 * @introduced 3.1.68.12-7-g858688944a
-	 */
-	editColor(id: string, color: Color): Promise<void>;
-	/**
-	 * Change the icon of the Tag disc
-	 *
-	 * **Note**: these changes are not persisted between refreshes of Showcase. They are only valid for the current browser session.
-	 *
-	 * ```typescript
-	 * // change the icon of the Tag using the id used in a previous registeredIcon call
-	 * mpSdk.Tag.editIcon(id, 'customIconId');
-	 * ```
-	 *
-	 * @param tagId The id of the Tag to edit
-	 * @param iconId The id of the icon to apply
-	 *
-	 * @embed
-	 * @bundle
-	 * @introduced 3.1.68.12-7-g858688944a
-	 */
-	editIcon(tagId: string, iconId: string): Promise<void>;
-	/**
-	 * Edit the opacity of a Tag.
-	 *
-	 * A completely transparent/invisible Tag is still interactable and will respond to mouse hovers and clicks.
-	 *
-	 * ```typescript
-	 * const tagIds: string[]; // ... acquired through previous calls to `mpSdk.Tag.add` or through `mpSdk.Tag.data`
-	 * // make the first Tag invisible
-	 * mpSdk.Tag.editOpacity(tagIds[0], 0);
-	 *
-	 * // make another Tag transparent
-	 * mpSdk.Tag.editOpacity(tagIds[1], 0.5);
-	 *
-	 * // and another completely opaque
-	 * mpSdk.Tag.editOpacity(tagIds[2], 1);
-	 * ```
-	 *
-	 * @param id The id of the Tag to edit
-	 * @param opacity The target opacity for the Tag in the range of [0, 1]
-	 *
-	 * @embed
-	 * @bundle
-	 * @introduced 3.1.68.12-7-g858688944a
-	 */
-	editOpacity(id: string, opacity: number): Promise<void>;
-	/**
-	 * Edit the stem of a Tag
-	 *
-	 * ```typescript
-	 * const tagId: string = tagData[0].id; // ... acquired through a previous call to `mpSdk.Tag.add` or through `mpSdk.Tag.data`
-	 *
-	 * // make the first Tag have an invsible stem
-	 * mpSdk.Tag.editStem(tagId, {stemVisible: false});
-	 *
-	 * // make another Tag have a long stem
-	 * mpSdk.Tag.editStem(tagId, {stemHeight: 1});
-	 *
-	 *
-	 * @param tagSid The sid of the Tag to edit
-	 * @param stemOptions What to change about the Tag's stem - can include stemHeight and stemVisible
-	 * @introduced 3.1.70.10-0-ge9cb83b28c
-	 */
-	editStem(tagSid: string, options: Partial<Tag.StemHeightEditOptions>): Promise<void>;
-	/**
-	 * Move and reorient a Tag.
-	 *
-	 * See [[Pointer.intersection]] for a way to retrieve a new `anchorPosition` and `stemVector`.
-	 *
-	 * **Note**: these changes are not persisted between refreshes of Showcase. They are only valid for the current browser session.
-	 *
-	 * ```typescript
-	 * const tagId: string; // ... acquired through a previous call to `mpSdk.Tag.add` or through `mpSdk.Tag.data`
-	 *
-	 * mpSdk.Tag.editPosition(tagId, {
-	 *  anchorPosition: {
-	 *    x: 0,
-	 *    y: 0,
-	 *    z: 0,
-	 *  },
-	 *  stemVector: { // make the Tag stick straight up and make it 0.30 meters (~1 foot) tall
-	 *    x: 0,
-	 *    y: 0.30,
-	 *    z: 0,
-	 *  },
-	 * });
-	 * ```
-	 * @param id The id of the Tag to reposition
-	 * @param options The new anchorPosition, stemVector and/or roomId to associate the tag with.
-	 *
-	 * @embed
-	 * @bundle
-	 * @introduced 3.1.68.12-7-g858688944a
-	 */
-	editPosition(id: string, options: Partial<Tag.PositionOptions>): Promise<void>;
-	/**
-	 * Removes one or more Tags from Showcase.
-	 *
-	 * **Note**: these changes are not persisted between refreshes of Showcase. They are only valid for the current browser session.
-	 *
-	 * ```typescript
-	 * const tagIds: string[]; // ... acquired through a previous call to `mpSdk.Tag.add` or through `mpSdk.Tag.data`
-	 * // remove one tag
-	 * mpSdk.Tag.remove(tagIds[0]);
-	 *
-	 * // or remove multiple at the same time
-	 * mpSdk.Tag.remove(...tagIds);
-	 * ```
-	 * @param ids The Tags' ids to be removed.
-	 * @returns A promise with an array of Tag ids that were actually removed.
-	 *
-	 * @embed
-	 * @bundle
-	 * @introduced 3.1.68.12-7-g858688944a
-	 */
-	remove(...ids: string[]): Promise<string[]>;
-	/**
-	 * Resets the icon of the Tag disc back to its original icon.
-	 *
-	 * ```typescript
-	 * const tagIds: string[]; // ... acquired through a previous call to `mpSdk.Tag.add` or through `mpSdk.Tag.data`
-	 *
-	 * // reset the icon of the first Tag to its original
-	 * mpSdk.Tag.resetIcon(tagIds[0].id);
-	 * ```
-	 *
-	 * @param id The id of the Tag to reset
-	 *
-	 * @embed
-	 * @bundle
-	 * @introduced 3.1.68.12-7-g858688944a
-	 */
-	resetIcon(id: string): Promise<void>;
+	focus(target: THREE.Vector3 | THREE.Box3, options?: {
+		from?: THREE.Vector3;
+		mode?: Mode.Mode.INSIDE | Mode.Mode.DOLLHOUSE | Mode.Mode.FLOORPLAN;
+		transition?: Mode.TransitionType;
+	}): Promise<void>;
 }
 /**
- * Sample custom tour.
- *
- * ```
- * const connect = function(sdk) {
- *   const mpSdk = sdk;
- *
- *   mpSdk.Tour.Event.on(Tour.Event.STEPPED, function(tourIndex){
- *     console.log('Tour index ' + tourIndex);
- *   });
- *   mpSdk.Tour.Event.on(Tour.Event.STARTED, function(){
- *     console.log('Tour started');
- *   });
- *   mpSdk.Tour.Event.on(Tour.Event.STOPPED, function(){
- *     console.log('Tour stopped');
- *   });
- *
- *   mpSdk.Tour.getData()
- *     .then(function(tour) {
- *       console.log('tour has ' + tour.length + ' stops');
- *       return mpSdk.Tour.start(0);
- *     })
- *     .then(function(){
- *       // console 'Tour started'
- *       // console -> 'Tour index 0'
- *       return mpSdk.Tour.next();
- *     })
- *     .then(function(){
- *       // console -> 'Tour index 1'
- *       return mpSdk.Tour.step(3);
- *     })
- *     .then(function(){
- *       // console -> 'Tour index 3'
- *       return mpSdk.Tour.prev();
- *     })
- *     .then(function(){
- *       // console -> 'Tour index 2'
- *       // console -> 'Tour stopped'
- *       return mpSdk.Tour.stop();
- *     });
- * }
- * ```
- *
+ * Options to provide when connecting the sdk
  */
-export declare namespace Tour {
-	type Snapshot = {
-		sid: string;
-		thumbnailUrl: string;
-		imageUrl: string;
-		is360: boolean;
-		name: string;
-		mode: Mode.Mode | undefined;
-		position: Vector3;
-		rotation: Vector3;
-		zoom: number;
-	};
-	enum Event {
-		/** @event */
-		STARTED = "tour.started",
-		/** @event */
-		STOPPED = "tour.stopped",
-		/** @event */
-		ENDED = "tour.ended",
-		/** @event */
-		STEPPED = "tour.stepped"
-	}
-	type CurrentStepData = {
-		step: string | null;
-	};
-	enum PlayState {
-		INACTIVE = "tour.inactive",
-		ACTIVE = "tour.active",
-		STOP_SCHEDULED = "tour.stopscheduled"
-	}
-	type CurrentStateData = {
-		current: PlayState;
-	};
-	type CurrentTransitionData = {
-		from: string | null;
-		to: string | null;
-	};
-}
-export declare interface Tour {
-	Event: typeof Tour.Event;
-	PlayState: typeof Tour.PlayState;
+export declare type ConnectOptions = {
+	/** A token to provide access to a model */
+	auth: string;
 	/**
-	 * This function starts the tour.
-	 *
-	 * ```
-	 * const tourIndex = 1;
-	 *
-	 * mpSdk.Tour.start(tourIndex)
-	 *   .then(function() {
-	 *     // Tour start complete.
-	 *   })
-	 *   .catch(function(error) {
-	 *     // Tour start error.
-	 *   });
-	 * ```
-	 *
-	 * @embed
-	 * @bundle
+	 * @hidden
 	 */
-	start(index?: number): Promise<void>;
-	/**
-	 * This function stops the tour.
-	 *
-	 * ```
-	 * mpSdk.Tour.stop()
-	 *   .then(function() {
-	 *     // Tour stop complete.
-	 *   })
-	 *   .catch(function(error) {
-	 *     // Tour stop error.
-	 *   });
-	 * ```
-	 *
-	 * @embed
-	 * @bundle
-	 */
-	stop(): Promise<void>;
-	/**
-	 * This function moves the camera to a specific snapshot in the tour.
-	 *
-	 * ```
-	 * const myStep = 2;
-	 * mpSdk.Tour.step(myStep)
-	 *   .then(function() {
-	 *     //Tour step complete.
-	 *   })
-	 *   .catch(function(error) {
-	 *     // Tour step error.
-	 *   });
-	 * ```
-	 *
-	 * @embed
-	 * @bundle
-	 */
-	step(index: number): Promise<void>;
-	/**
-	 * This function moves the camera to the next snapshot in the tour.
-	 *
-	 * ```
-	 * mpSdk.Tour.next()
-	 *   .then(function() {
-	 *     // Tour next complete.
-	 *   })
-	 *   .catch(function(error) {
-	 *     // Tour next error.
-	 *   });
-	 * ```
-	 *
-	 * @embed
-	 * @bundle
-	 */
-	next(): Promise<void>;
-	/**
-	 * This function moves the camera to the previous snapshot in the tour.
-	 *
-	 * ```
-	 * mpSdk.Tour.prev()
-	 *   .then(function() {
-	 *     // Tour prev complete.
-	 *   })
-	 *   .catch(function(error) {
-	 *     // Tour prev error.
-	 *   });
-	 * ```
-	 *
-	 * @embed
-	 * @bundle
-	 */
-	prev(): Promise<void>;
-	/**
-	 * This function returns an array of Snapshots.
-	 *
-	 * ```
-	 * mpSdk.Tour.getData()
-	 *   .then(function(snapshots) {
-	 *     // Tour getData complete.
-	 *     if(snapshots.length > 0){
-	 *       console.log('First snapshot sid: ' + snapshots[0].sid);
-	 *       console.log('First snapshot name: ' + snapshots[0].name);
-	 *       console.log('First snapshot position: ' + snapshots[0].position);
-	 *     }
-	 *   })
-	 *   .catch(function(error) {
-	 *     // Tour getData error.
-	 *   });
-	 * ```
-	 *
-	 * @embed
-	 * @bundle
-	 */
-	getData(): Promise<Tour.Snapshot[]>;
-	/**
-	 * The zero-indexed current Tour step.
-	 * The step will be null if no Tour is currently playing.
-	 *
-	 * ```
-	 * mpSdk.Tour.currentStep.subscribe(function (current) {
-	 *   // the step index has changed
-	 *   // 0 for the first step, 1 for the second, etc.
-	 *   console.log('Current step is ', current.step);
-	 * });
-	 * ```
-	 *
-	 * @embed
-	 * @bundle
-	 * @introduced 3.1.68.12-7-g858688944a
-	 */
-	currentStep: IObservable<Tour.CurrentStepData>;
-	/**
-	 * An observable state of the current Tour. Returns a Tour.PlayState of
-	 * `INACTIVE` (no tour in progress), `ACTIVE` (tour in progress), or `STOP_SCHEDULED`
-	 * (tour in progress, but a stop has been queued by the user or automatically by the tour ending).
-	 *
-	 * ```
-	 * mpSdk.Tour.state.subscribe(function (state) {
-	 *   // the state has changed
-	 *   console.log('Current state is ', state.current);
-	 * });
-	 * ```
-	 *
-	 * @embed
-	 * @bundle
-	 * @introduced 3.1.68.12-7-g858688944a
-	 */
-	state: IObservable<Tour.CurrentStateData>;
-	/**
-	 * An observable representing the current Tour's transition.
-	 *
-	 * `{ from: string | null, to: string | null }`.
-	 *
-	 * `from` can be `null` when transitioning from outside of a tour. `from` and `to` will both be `null` when
-	 * there is no active transition.
-	 *
-	 * ```
-	 * mpSdk.Tour.transition.subscribe(function (transition) {
-	 *   // the transition has changed
-	 *   console.log('Current transition is ', transition.from, transition.to);
-	 * });
-	 * ```
-	 *
-	 * @embed
-	 * @bundle
-	 * @introduced 3.1.68.12-7-g858688944a
-	 */
-	transition: IObservable<Tour.CurrentTransitionData>;
-}
-interface Emitter {
-	/** Start listening for an event */
-	on: typeof on;
-	/** Stop listening for an event */
-	off: typeof off;
-}
-declare function off(event: any, callback: (...any: any[]) => void): Emitter;
-declare function on(event: App.Event.PHASE_CHANGE, callback: (app: App.Phase) => void): Emitter;
-declare function on(event: Camera.Event.MOVE, callback: (pose: Camera.Pose) => void): Emitter;
-declare function on(event: Floor.Event.CHANGE_START, callback: (to: number, from: number) => void): Emitter;
-declare function on(event: Floor.Event.CHANGE_END, callback: (floorIndex: number, floorName: string) => void): Emitter;
-declare function on(event: Label.Event.POSITION_UPDATED, callback: (labelData: Label.Label[]) => void): Emitter;
-declare function on(event: Mattertag.Event.HOVER, callback: (tagSid: string, hovering: boolean) => void): Emitter;
-declare function on(event: Mattertag.Event.CLICK, callback: (tagSid: string) => void): Emitter;
-declare function on(event: Mattertag.Event.LINK_OPEN, callback: (tagSid: string, url: string) => void): Emitter;
-declare function on(event: Mode.Event.CHANGE_START, callback: (oldMode: string, newMode: string) => void): Emitter;
-declare function on(event: Mode.Event.CHANGE_END, callback: (oldMode: string, newMode: string) => void): Emitter;
-declare function on(event: Model.Event.MODEL_LOADED, callback: (model: Model.ModelData) => void): Emitter;
-declare function on(event: Sweep.Event.ENTER, callback: (oldSweep: string, newSweep: string) => void): Emitter;
-declare function on(event: Sweep.Event.EXIT, callback: (fromSweep: string, toSweep: string | undefined) => void): Emitter;
-declare function on(event: Tour.Event.STARTED, callback: () => void): Emitter;
-declare function on(event: Tour.Event.STOPPED, callback: () => void): Emitter;
-declare function on(event: Tour.Event.ENDED, callback: () => void): Emitter;
-declare function on(event: Tour.Event.STEPPED, callback: (activeIndex: number) => void): Emitter;
+	provider: string;
+};
 /**
  * The entire MP Sdk returned from a successful call to `MP_SDK.connect` on the [[ShowcaseBundleWindow]].
  *
@@ -5049,57 +5159,41 @@ declare function on(event: Tour.Event.STEPPED, callback: (activeIndex: number) =
  * const sdk: MpSdk = await bundleWindow.MP_SDK.connect(...);
  * ```
  */
-export declare type MpSdk = {
-	App: App;
-	Asset: Asset;
-	Camera: Camera;
-	Conversion: Conversion;
-	Floor: Floor;
-	Graph: Graph;
-	Label: Label;
-	Link: Link;
-	Mattertag: Mattertag;
-	Measurements: Measurements;
-	Mode: Mode;
-	Model: Model;
-	OAuth: OAuth;
-	Pointer: Pointer;
-	Renderer: Renderer;
-	Room: Room;
+export declare type MpSdk = CommonMpSdk & {
 	Scene: Scene;
-	Sensor: Sensor;
-	Settings: Settings;
-	Sweep: Sweep;
-	Tag: Tag;
-	Tour: Tour;
-	on: typeof on;
-	off: typeof off;
-	disconnect: typeof disconnect;
+	R3F: R3F;
 };
 /**
  * Provide a single MpSdk namespace that can be used to access all sub-namespace types
- * ```
+ *
+ * ```typescript
  * const sdk: Mpsdk = connect(...);
  * const camera: MpSdk.Camera = sdk.Camera;
  * ```
+ *
+ *  Due to a limitation in typescript, this namespace must be re-created in each file. The
+ *  export groupings are created to simplify bookkeeping with the other files.
  */
 export declare namespace MpSdk {
+	export { Scene, };
 	export { Color, ConditionCallback, Dictionary, ICondition, IMapObserver, IObservable, IObservableMap, IObserver, ISubscription, ObserverCallback, Orientation, Rotation, Size, Vector2, Vector3, };
-	export { App, Asset, Camera, Conversion, Floor, Graph, Label, Link, Mattertag, Measurements, Mode, Model, OAuth, Pointer, Renderer, Room, Scene, Sensor, Settings, Sweep, Tag, Tour, };
+	export { App, Asset, Camera, Conversion, Floor, Graph, Label, Link, Mattertag, Measurements, Mode, Model, OAuth, Pointer, R3F, Renderer, Room, Sensor, Settings, Sweep, Tag, Tour, };
 }
 /**
  * A Window type that can be used to cast the bundle's iframe's contentWindow to hint at the existance of the [[MP_SDK]] object.
+ *
  * ```typescript
  * const bundleIframe = document.getElementById<HTMLIFrameElement>('showcase');
  * const showcaseWindow = bundleIframe.contentWindow as ShowcaseBundleWindow;
  * showcaseWindow.MP_SDK.connect(showcaseWindow);
  * ```
  */
-export declare type ShowcaseBundleWindow = Window & typeof globalThis & {
+export declare type ShowcaseBundleWindow = ((Window & typeof globalThis) | ShadowRoot) & {
 	MP_SDK: MP_SDK;
 };
 /**
  * The entrypoint for connecting to the SDK and creating an [[MpSdk]] interface.
+ *
  * ```typescript
  * const bundleIframe = document.getElementById<HTMLIFrameElement>('showcase');
  * const showcaseWindow = bundleIframe.contentWindow as ShowcaseBundleWindow;

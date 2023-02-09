@@ -287,6 +287,7 @@
       "HAVE_NONE_RESOLVED": "解決されたNoteはありません。",
       "ATTACHMENTS": "%{smart_count}個の添付ファイル",
       "RESULTS": "%{smart_count}個の結果",
+      "COMMENTS": "%{smart_count} Comment |||| %{smart_count} Comments",
       "NOTES": "%{smart_count}個のNote",
       "REPLIES": "%{smart_count}件の返信",
       "CONTENT_DELETED": "元のコンテンツは削除されました",
@@ -330,7 +331,15 @@
     },
     "SEARCH": {
       "QUERY_PLACEHOLDER": "スペースを検索",
+      "SEARCH_IN_TOOL_PLACEHOLDER": "Search",
       "CLEAR_SEARCH": "消去",
+      "FILTER_SEARCH": "Filter by",
+      "FILTER_SEARCH_ALL": "All",
+      "FILTER_SEARCH_REMOVE": "Remove Filter",
+      "GROUP_DATE": "Date",
+      "GROUP_DATE_SELECTED": "By Date",
+      "GROUP_LAYER": "Group",
+      "GROUP_LAYER_SELECTED": "By Group",
       "GROUP_FLOOR": "階",
       "GROUP_FLOOR_SELECTED": "フロア別",
       "GROUP_TYPE": "タイプ",
@@ -343,9 +352,9 @@
       "ADVANCED_SEARCH_TITLE": "詳細検索モード"
     },
     "SUBSCRIBER_PROMPT": {
-      "BANNER_CTA_LINK_TEXT": "Matterportについて",
-      "POPUP_CTA_HEADING": "自分のスペースをキャプチャー",
-      "POPUP_CTA_LINK_TEXT": "Matterportアプリをダウンロード"
+      "BANNER_CTA_LINK_TEXT": "自分のスペースをキャプチャー",
+      "POPUP_CTA_LINK_TEXT": "Matterportアプリをダウンロード",
+      "POPUP_CTA_HEADING": "Start sharing in 3D today"
     },
     "SUMMARY": {
       "HEADING": "Spaceの情報",
@@ -376,7 +385,7 @@
     "HLR_HELP_MESSAGE": "Highlight Reelを使うと、Space内の最も重要な場所にビジターを案内できます。",
     "LABELS": "ラベル",
     "LABELS_HELP_MESSAGE": "ラベルとは、Space内の部屋に関連付けることができる簡単な説明です。",
-    "LAYERS": "Layers",
+    "LAYERS": "Search & Organize",
     "LAYERS_HELP_MESSAGE": "Layers are used to group data elements together.",
     "MATTERTAGS": "Mattertag",
     "MATTERTAGS_HELP_MESSAGE": "Mattertagを使用すると、機能の呼び出し、追加詳細の提供、Spaceへのコンテキストの追加を便利に実行できます。",
@@ -710,6 +719,9 @@
       "NEW_VIEW_NAME_PLACEHOLDER": "新しいビュー名",
       "VIEW_DUPLICATE_NAME_SUFFIX": "（コピー）",
       "ADD_VIEW_ITEM": "ビューを追加",
+      "DELETE_LAYER_ITEM": "Delete",
+      "DELETE_LAYER_MODAL_TITLE": "Delete Group",
+      "DELETE_LAYER_MODAL_MESSAGE": "Are you sure you want to delete this group?",
       "DELETE_VIEW_ITEM": "削除",
       "DELETE_VIEW_MODAL_TITLE": "ビューを削除",
       "DELETE_VIEW_MODAL_MESSAGE": "このビューを削除してもよろしいですか？",
@@ -1169,5 +1181,8 @@
   },
   "ZOOM": "ズーム",
   "ZOOM_IN": "拡大表示",
-  "ZOOM_OUT": "縮小表示"
+  "ZOOM_OUT": "縮小表示",
+  "SDK": {
+    "AWAITING": "Awaiting a valid SDK connection"
+  }
 }

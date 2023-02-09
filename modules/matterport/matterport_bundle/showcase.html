@@ -34,7 +34,7 @@
       flex: 1;
       position: relative;
       width: 100%;
-      background-color: #444;
+      background-color: #222;
     }
 
     #canvas-container {
@@ -98,12 +98,12 @@
 
 </section>
 
-<script src='vendors/three/0.139.2/three.min.js'></script>
+<script src='vendors/three/0.146.0/three.min.js'></script>
 <script src='js/browser-check.js'></script>
 <script src='js/showcase.js'></script>
 <script>
   var detailObject = {
-    config: {"apiHost":"https://my.matterport.com","pointerPreventDefault":false,"disableMobileRedirect":true}
+    config: {"apiHost":"https://my.matterport.com","pointerPreventDefault":false,"disableMobileRedirect":true, "embedlyKey": "cc5297afa79043f58421af7fbfd91685"}
   };
 
   if (mpBrowserCheck.supported()) {

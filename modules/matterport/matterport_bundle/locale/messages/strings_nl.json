@@ -287,7 +287,8 @@
       "HAVE_NONE_RESOLVED": "U heeft geen opgeloste notities.",
       "ATTACHMENTS": "%{smart_count} bijlage |||| %{smart_count} bijlagen",
       "RESULTS": "%{smart_count} resultaat |||| %{smart_count} resultaten",
-      "NOTES": "%{smart_count} notitie |||| %{smart_count} notities",
+      "COMMENTS": "%{smart_count} Comment |||| %{smart_count} Comments",
+      "NOTES": "%{smart_count} Notitie |||| %{smart_count} Notities",
       "REPLIES": "%{smart_count} antwoord |||| %{smart_count} antwoorden",
       "CONTENT_DELETED": "Oorspronkelijke inhoud is verwijderd",
       "ADD_NOTE_MESSAGE": "Voeg uw bericht toe",
@@ -330,7 +331,15 @@
     },
     "SEARCH": {
       "QUERY_PLACEHOLDER": "Ruimte zoeken",
+      "SEARCH_IN_TOOL_PLACEHOLDER": "Search",
       "CLEAR_SEARCH": "Wissen",
+      "FILTER_SEARCH": "Filter by",
+      "FILTER_SEARCH_ALL": "All",
+      "FILTER_SEARCH_REMOVE": "Remove Filter",
+      "GROUP_DATE": "Date",
+      "GROUP_DATE_SELECTED": "By Date",
+      "GROUP_LAYER": "Group",
+      "GROUP_LAYER_SELECTED": "By Group",
       "GROUP_FLOOR": "Verdieping",
       "GROUP_FLOOR_SELECTED": "Op verdieping",
       "GROUP_TYPE": "Type",
@@ -343,9 +352,9 @@
       "ADVANCED_SEARCH_TITLE": "Geavanceerde zoekmodus"
     },
     "SUBSCRIBER_PROMPT": {
-      "BANNER_CTA_LINK_TEXT": "Meer informatie over Matterport",
-      "POPUP_CTA_HEADING": "Leg uw eigen ruimte vast",
-      "POPUP_CTA_LINK_TEXT": "Download de Matterport-app"
+      "BANNER_CTA_LINK_TEXT": "Leg uw eigen ruimte vast",
+      "POPUP_CTA_LINK_TEXT": "Download de Matterport-app",
+      "POPUP_CTA_HEADING": "Start sharing in 3D today"
     },
     "SUMMARY": {
       "HEADING": "Informatie over de ruimte",
@@ -376,7 +385,7 @@
     "HLR_HELP_MESSAGE": "Gebruik de highlight-reel om bezoekers naar de belangrijkste locaties in uw ruimte te leiden.",
     "LABELS": "Labels",
     "LABELS_HELP_MESSAGE": "Labels zijn korte beschrijvingen die u kunt toevoegen aan een kamer in een ruimte.",
-    "LAYERS": "Layers",
+    "LAYERS": "Search & Organize",
     "LAYERS_HELP_MESSAGE": "Layers are used to group data elements together.",
     "MATTERTAGS": "Mattertags",
     "MATTERTAGS_HELP_MESSAGE": "Mattertags zijn een goede manier om functies uit te lichten, aanvullende informatie te geven en context te geven bij een ruimte.",
@@ -710,6 +719,9 @@
       "NEW_VIEW_NAME_PLACEHOLDER": "Naam nieuwe weergave",
       "VIEW_DUPLICATE_NAME_SUFFIX": "(kopie)",
       "ADD_VIEW_ITEM": "Weergave toevoegen",
+      "DELETE_LAYER_ITEM": "Delete",
+      "DELETE_LAYER_MODAL_TITLE": "Delete Group",
+      "DELETE_LAYER_MODAL_MESSAGE": "Are you sure you want to delete this group?",
       "DELETE_VIEW_ITEM": "Verwijderen",
       "DELETE_VIEW_MODAL_TITLE": "Weergave verwijderen",
       "DELETE_VIEW_MODAL_MESSAGE": "Weet u zeker dat u deze weergave wilt verwijderen?",
@@ -1169,5 +1181,8 @@
   },
   "ZOOM": "Zoom",
   "ZOOM_IN": "Zoom in",
-  "ZOOM_OUT": "Zoom uit"
+  "ZOOM_OUT": "Zoom uit",
+  "SDK": {
+    "AWAITING": "Awaiting a valid SDK connection"
+  }
 }

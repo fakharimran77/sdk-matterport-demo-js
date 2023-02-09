@@ -287,6 +287,7 @@
       "HAVE_NONE_RESOLVED": "해결된 메모가 없습니다.",
       "ATTACHMENTS": "%{smart_count}개의 첨부 파일",
       "RESULTS": "%{smart_count}개의 결과",
+      "COMMENTS": "%{smart_count} Comment |||| %{smart_count} Comments",
       "NOTES": "%{smart_count}개의 메모",
       "REPLIES": "%{smart_count}개의 응답",
       "CONTENT_DELETED": "원본 콘텐츠가 삭제됨",
@@ -330,7 +331,15 @@
     },
     "SEARCH": {
       "QUERY_PLACEHOLDER": "공간 검색",
+      "SEARCH_IN_TOOL_PLACEHOLDER": "Search",
       "CLEAR_SEARCH": "지우기",
+      "FILTER_SEARCH": "Filter by",
+      "FILTER_SEARCH_ALL": "All",
+      "FILTER_SEARCH_REMOVE": "Remove Filter",
+      "GROUP_DATE": "Date",
+      "GROUP_DATE_SELECTED": "By Date",
+      "GROUP_LAYER": "Group",
+      "GROUP_LAYER_SELECTED": "By Group",
       "GROUP_FLOOR": "층",
       "GROUP_FLOOR_SELECTED": "층별",
       "GROUP_TYPE": "유형",
@@ -343,9 +352,9 @@
       "ADVANCED_SEARCH_TITLE": "고급 검색 모드"
     },
     "SUBSCRIBER_PROMPT": {
-      "BANNER_CTA_LINK_TEXT": "Matterport에 대해 알아보기",
-      "POPUP_CTA_HEADING": "나만의 공간 캡처하기",
-      "POPUP_CTA_LINK_TEXT": "Matterport 앱 다운로드하기"
+      "BANNER_CTA_LINK_TEXT": "나만의 공간 캡처하기",
+      "POPUP_CTA_LINK_TEXT": "Matterport 앱 다운로드하기",
+      "POPUP_CTA_HEADING": "Start sharing in 3D today"
     },
     "SUMMARY": {
       "HEADING": "공간 정보",
@@ -376,7 +385,7 @@
     "HLR_HELP_MESSAGE": "Highlight Reel을 사용해 공간의 가장 중요한 장소들로 방문자를 안내하세요.",
     "LABELS": "라벨",
     "LABELS_HELP_MESSAGE": "라벨은 공간의 방에 표시할 수 있는 짧은 설명입니다.",
-    "LAYERS": "Layers",
+    "LAYERS": "Search & Organize",
     "LAYERS_HELP_MESSAGE": "Layers are used to group data elements together.",
     "MATTERTAGS": "Mattertag",
     "MATTERTAGS_HELP_MESSAGE": "Mattertag는 공간의 기능을 표시하고, 추가적인 정보를 제공하고, 컨텍스트를 추가할 수 있는 좋은 방법입니다.",
@@ -710,6 +719,9 @@
       "NEW_VIEW_NAME_PLACEHOLDER": "새 뷰 이름",
       "VIEW_DUPLICATE_NAME_SUFFIX": "(복사)",
       "ADD_VIEW_ITEM": "뷰 추가",
+      "DELETE_LAYER_ITEM": "Delete",
+      "DELETE_LAYER_MODAL_TITLE": "Delete Group",
+      "DELETE_LAYER_MODAL_MESSAGE": "Are you sure you want to delete this group?",
       "DELETE_VIEW_ITEM": "삭제",
       "DELETE_VIEW_MODAL_TITLE": "뷰 삭제",
       "DELETE_VIEW_MODAL_MESSAGE": "이 뷰를 삭제하시겠어요?",
@@ -1169,5 +1181,8 @@
   },
   "ZOOM": "확대/축소",
   "ZOOM_IN": "확대",
-  "ZOOM_OUT": "축소"
+  "ZOOM_OUT": "축소",
+  "SDK": {
+    "AWAITING": "Awaiting a valid SDK connection"
+  }
 }
