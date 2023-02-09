@@ -25,7 +25,7 @@ function loadPlugin() {
         },
         isAvatarsEnabled: true,
         isLaserEnabled: true,
-        isNameEnabled: true
+        isNameEnabled: false
     });
 }
 
