@@ -18,5 +18,4 @@ export const supervizSdk = await SuperVizSdk.init(DEVELOPER_KEY, {
     roomId: roomId,
     defaultAvatars: true,
     enableFollow: true,
-    debug: true
 });
