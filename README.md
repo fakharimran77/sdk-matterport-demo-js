@@ -12,7 +12,7 @@ Clone the project repository:
 git@github.com:SuperViz/sdk-matterport-demo-js.git
 ```
 
-Fill the constant ```<SUPERVIZ_DEVELOPER_TOKEN>``` in ```modules/superviz/supervizSdk.js``` with your superviz developer token.
+Fill the constant ```<SUPERVIZ_DEVELOPER_KEY>``` in ```modules/superviz/supervizSdk.js``` with your superviz developer token.
 
 Fill the constant ```<MATTERPORT_DEVELOPER_KEY>``` in ```modules/matterport/matterportSdk.js``` with your matterport developer credentials.
 
