@@ -112,5 +112,7 @@ supervizSdk.subscribe(CONTENT_SYNC_PROPERTY, function (newModelSid) {
 
 // received matterport loaded new content
 export const onContentChanged = () => {
-    loadPlugin(); // reconnect plugin
+    if(changedContent) { 
+      loadPlugin(); // reconnect plugin
+    } 
 }
