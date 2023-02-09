@@ -11,7 +11,7 @@ export const supervizSdk = await SuperVizSdk.init(DEVELOPER_KEY, {
         name: "<GROUP-NAME>"
     },
     participant: {
-        id: Math.random().toFixed(1),
+        id: Date.now().toPrecision(20),
         name: userName ? userName : undefined,
         type: userType,
     },
