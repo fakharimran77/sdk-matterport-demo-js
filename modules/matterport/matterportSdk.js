@@ -1,11 +1,9 @@
 const MATTERPORT_KEY = "<MATTERPORT_DEVELOPER_KEY>";
-import { isIphone } from '../superviz/supervizSdk.js';
 import { onContentChanged } from './../../index.js'
 
 export let matterportSdk;
 
 export const changeContent = async (content) => {
-    await destroyMatterportIframe();
     buildMatterportIframe(content);
 }
 
@@ -28,15 +26,12 @@ async function buildMatterportIframe(content) {
 }
 
 function buildUrl (content) {
-    const baseUrl = isIphone()
-    ? 'https://my.matterport.com/show'
-    : `${window.location.origin}/modules/matterport/matterport_bundle/showcase.html`
+    const baseUrl = `${window.location.origin}/modules/matterport/matterport_bundle/showcase.html`
 
     const url = new URL(baseUrl)
 
-
     url.searchParams.set('applicationKey', MATTERPORT_KEY)
-    url.searchParams.set('m', content)
+    url.searchParams.set('m', 'v4LWLiLDm3s')
     url.searchParams.set('play', 1)
     url.searchParams.set('brand', 0)
     url.searchParams.set('gt', 0)
@@ -52,28 +47,9 @@ function buildUrl (content) {
     return url.toString()
 }
 
-function destroyMatterportIframe() { 
-    matterportSdk?.disconnect();
-    const showcase = document.getElementById('showcase')
-    if (!showcase) return
-
-    showcase.removeEventListener('load', onShowcaseLoad)
-
-    return new Promise((resolve) => {
-        setTimeout(() => {
-        showcase.src = 'about:blank'
-        setTimeout(() => {
-            showcase.remove(showcase)
-            resolve()
-        }, 1000)
-        }, 1000)
-    })   
-}
-
-
 async function onShowcaseLoad() { 
     const iframe = document.getElementById('showcase');    
-    const MP_SDK = isIphone() ? window.MP_SDK : iframe.contentWindow.MP_SDK;
+    const MP_SDK = iframe.contentWindow.MP_SDK;
 
     try {
         matterportSdk = await MP_SDK.connect(iframe, MATTERPORT_KEY,'');
