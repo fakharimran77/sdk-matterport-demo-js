@@ -29,6 +29,10 @@ function loadPlugin() {
 supervizSdk.subscribe(SuperVizSdk.MeetingEvent.MY_PARTICIPANT_JOINED, (participant) => {
     document.getElementById("wrapper").style.display = "none";
     changeContent()
+
+    amplitude.track("Enter example", {
+      exampleName: "matterport-demo-js",
+    });
 });
 
 // received matterport loaded new content
