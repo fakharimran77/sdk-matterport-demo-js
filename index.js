@@ -29,7 +29,7 @@ function loadPlugin() {
 supervizSdk.subscribe(SuperVizSdk.MeetingEvent.MY_PARTICIPANT_JOINED, (participant) => {
     document.getElementById("wrapper").style.display = "none";
     changeContent()
-
+    document.getElementById("collapsedButtonInvite").style.display = "flex";
     amplitude.track("Enter example", {
       exampleName: "matterport-demo-js",
     });
