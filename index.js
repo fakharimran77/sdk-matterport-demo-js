@@ -9,6 +9,7 @@ const iframeMeetingSettings = document.getElementById("sv-video-frame");
 // verify if meeting settings iframe is loaded
 iframeMeetingSettings.addEventListener("load", function() {
     document.getElementById("loader-ms").style.display = "none";
+    document.querySelector('.sv_video_wrapper').setAttribute('style', 'z-index: 22; position: absolute;');
 });
 
 function loadPlugin() {
