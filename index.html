@@ -7,7 +7,6 @@
 	<title>Superviz MatterportJS DEMO</title>
 	<link rel="icon" href="modules/public/images/favicon.png" />
 	<link rel="stylesheet" href="https://production.storage.superviz.com/demos/assets/css/main.css">
-	<script type="module" src="./modules/demo/demo.js"></script>
 	<script type="module" src="https://production.storage.superviz.com/demos/components/index.js"></script>
 	<script type="module" src="https://production.storage.superviz.com/demos/assets/js/production/amplitude.js"></script>
 	<script type="text/javascript">
@@ -16,6 +15,11 @@
 				exampleName: "matterport-demo-js",
 			});
 		});
+
+		const changePage = () => {
+			userName = document.getElementById('username').value ?? undefined;
+			location.href = `${location.origin}/invite.html?user-name=${userName}`;
+		}
 	</script>
 </head>
 
@@ -35,7 +39,7 @@
 					<sv-demo-title-right name="Add your name to get started"></sv-demo-title-right>
 					<sv-demo-image name="https://production.cdn.superviz.com/static/avatar-name.png"></sv-demo-image>
 					<input type="text" class="sv-demo-input" id="username" />
-					<sv-demo-button name="NEXT" id="next"> </sv-demo-button>
+					<sv-demo-button onClick="changePage" name="NEXT" id="next"> </sv-demo-button>
 				</div>
 			</div>
 		</div>

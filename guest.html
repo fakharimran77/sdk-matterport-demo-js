@@ -7,8 +7,14 @@
     <title>Superviz MatterportJS DEMO</title>
     <link rel="icon" href="modules/public/images/favicon.png" />
     <link rel="stylesheet" href="https://production.storage.superviz.com/demos/assets/css/main.css">
-    <script type="module" src="./modules/demo/demo.js"></script>
     <script type="module" src="https://production.storage.superviz.com/demos/components/index.js"></script>
+    <script>
+        const changePage = () => {
+            const url = new URL(document.URL)
+            const roomId = url.searchParams.get('roomId')
+            location.href = `${location.origin}/ready.html?roomId=${roomId}&user-type=guest`;
+        }
+    </script>
 </head>
 
 <body>
@@ -26,7 +32,7 @@
                     <sv-demo-sub-title id="sv-demo-sub-title"
                         name="The easiest way to bring people together inside of your 3D web applicaton">
                     </sv-demo-sub-title>
-                    <sv-demo-guest-button id="join" name="NEXT">
+                    <sv-demo-guest-button onClick="changePage" id="join" name="NEXT">
                     </sv-demo-guest-button>
                 </div>
                 <div class="box-side-guest">
