@@ -44,3 +44,14 @@ export const onContentChanged = () => {
 
     loadPlugin(); // reconnect plugin
 }
+
+
+supervizSdk.subscribe(SuperVizSdk.MeetingEvent.MEETING_PARTICIPANT_LEFT, (value) => {
+    if (value.isHost) {
+        window.location.href = 'https://www.superviz.com'
+    }
+});
+
+supervizSdk.subscribe(SuperVizSdk.MeetingEvent.MY_PARTICIPANT_LEFT, () => {
+  window.location.href = "https://www.superviz.com";
+});
