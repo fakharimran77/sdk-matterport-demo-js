@@ -12,7 +12,7 @@
         const changePage = () => {
             const url = new URL(document.URL)
             const roomId = url.searchParams.get('roomId')
-            location.href = `${location.origin}/ready.html?roomId=${roomId}&user-type=guest`;
+            location.href = `${location.origin}/ready.html?roomId=${roomId}`;
         }
     </script>
 </head>
